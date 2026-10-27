@@ -9,3 +9,7 @@ altair
 matplotlib
 python-docx
 Pillow
+anthropic
+google-genai>=1.0.0,<2.0.0
+pypdf
+
