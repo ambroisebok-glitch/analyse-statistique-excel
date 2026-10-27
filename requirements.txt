@@ -1,0 +1,11 @@
+streamlit>=1.40
+pandas
+numpy
+scipy
+statsmodels
+openpyxl
+xlrd
+altair
+matplotlib
+python-docx
+Pillow
