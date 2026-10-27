@@ -212,12 +212,15 @@ def modalites(s):
 
 
 def groupes_numeriques(df, y, g):
-    d = df[[y, g]].copy()
-    d[y] = pd.to_numeric(d[y], errors="coerce")
-    d = d.dropna()
-    d[g] = d[g].astype(str)
-    cles = sorted(d[g].unique(), key=_cle_tri)
-    return {k: d.loc[d[g] == k, y].to_numpy(float) for k in cles}
+    if y == g:
+        raise ValueError("La variable quantitative et la variable de regroupement doivent être différentes.")
+    vy, vg = df[y], df[g]
+    if isinstance(vy, pd.DataFrame) or isinstance(vg, pd.DataFrame):
+        raise ValueError("Des colonnes portent le même nom dans la base : renommez-les avant l'analyse.")
+    d = pd.DataFrame({"y": pd.to_numeric(vy, errors="coerce"), "g": vg}).dropna()
+    d["g"] = d["g"].astype(str)
+    cles = sorted(d["g"].unique(), key=_cle_tri)
+    return {k: d.loc[d["g"] == k, "y"].to_numpy(float) for k in cles}
 
 
 def descriptifs_groupes(groupes):

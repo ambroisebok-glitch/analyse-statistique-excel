@@ -4,6 +4,7 @@ import numpy as np
 import stats_utils as su
 import graphiques as gr
 import rapport as rp
+import ui_exploration as ue
 
 st.set_page_config(
     page_title="StatExcel", page_icon="📊", layout="wide",
@@ -24,6 +25,7 @@ if fichier is None:
     st.info("Commencez par importer un fichier Excel dans le panneau de gauche.")
     st.markdown("""
     **Analyses disponibles dans cette première interface :**
+    - Exploration automatique : profil socio-démographique, hypothèses testables, carte de la zone d'étude
     - Recodage des variables selon l'analyse visée
     - Statistiques descriptives, fréquences et graphiques
     - Tests de normalité
@@ -49,6 +51,8 @@ cle_fichier = f"{fichier.name}|{feuille}"
 if st.session_state.get("cle_fichier") != cle_fichier:
     st.session_state["cle_fichier"] = cle_fichier
     st.session_state["recodages"] = []
+    st.session_state["rapport_hypotheses"] = []
+    st.session_state["rapport_blocs"] = None
 df, erreurs_recodage = su.appliquer_recodages(df_base, st.session_state["recodages"])
 
 if df.empty:
@@ -61,15 +65,31 @@ c1.metric("Observations", df.shape[0])
 c2.metric("Variables", df.shape[1])
 c3.metric("Valeurs manquantes", int(df.isna().sum().sum()))
 
-tab_data, tab_recode, tab_desc, tab_tests, tab_assoc, tab_reg, tab_alpha, tab_rapport = st.tabs([
-    "Données", "Recodage", "Descriptives", "Tests", "Associations", "Régression", "Fiabilité", "Rapport automatique"
+ctx_exploration = ue.analyser(df)
+ue.bandeau(ctx_exploration)
+
+tab_guide, tab_auto, tab_carte, tab_explo, tab_data, tab_recode, tab_desc, tab_tests, tab_assoc, tab_reg, tab_alpha, tab_rapport = st.tabs([
+    "Guide débutant", "Assistant automatique", "Carte GPS", "Exploration auto", "Données", "Recodage", "Descriptives",
+    "Tests", "Associations", "Régression", "Fiabilité", "Rapport automatique"
 ])
+
+with tab_guide:
+    ue.onglet_debutant(df, alpha)
+
+with tab_auto:
+    ue.onglet_assistant_auto(df, alpha, ctx_exploration)
+
+with tab_carte:
+    ue.onglet_carte(df, ctx_exploration)
+
+with tab_explo:
+    ue.onglet_exploration(df, alpha, ctx_exploration)
 
 with tab_data:
     st.subheader("Aperçu des données nettoyées (recodages inclus)")
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width="stretch")
     st.subheader("Résumé des variables")
-    st.dataframe(su.resume_variables(df), use_container_width=True)
+    st.dataframe(su.resume_variables(df), width="stretch")
     st.download_button(
         "Télécharger les données nettoyées (CSV)",
         df.to_csv(index=False).encode("utf-8-sig"),
@@ -124,7 +144,7 @@ with tab_recode:
             else:
                 st.caption("Donnez la même valeur à plusieurs modalités pour les regrouper ; laissez vide pour ne rien changer.")
             ed = st.data_editor(pd.DataFrame({"Modalité": mods, "Nouvelle valeur": defaut}), hide_index=True,
-                                disabled=["Modalité"], key=f"ed_{cle}", use_container_width=True)
+                                disabled=["Modalité"], key=f"ed_{cle}", width="stretch")
             params["correspondance"] = dict(zip(ed["Modalité"], ed["Nouvelle valeur"]))
             params["ordre"] = list(ed["Modalité"])
         elif operation == "inverser":
@@ -154,11 +174,11 @@ with tab_recode:
                 raise ValueError(f"Le nom « {pris[0]} » existe déjà : choisissez-en un autre.")
             st.markdown("**Aperçu**")
             st.dataframe(pd.concat([df[[source]].rename(columns={source: f"{source} (avant)"}), nouveau], axis=1).head(10),
-                         use_container_width=True)
+                         width="stretch")
             if all(pd.api.types.is_numeric_dtype(nouveau[c]) for c in nouveau.columns):
-                st.dataframe(su.decrire_numeriques(nouveau, list(nouveau.columns)), use_container_width=True)
+                st.dataframe(su.decrire_numeriques(nouveau, list(nouveau.columns)), width="stretch")
             else:
-                st.dataframe(su.frequences(nouveau.iloc[:, 0]).round(1), use_container_width=True)
+                st.dataframe(su.frequences(nouveau.iloc[:, 0]).round(1), width="stretch")
             apercu_ok = True
         except Exception as e:
             st.warning(f"Aperçu impossible : {e}")
@@ -195,7 +215,7 @@ with tab_desc:
             choix_nums = st.multiselect("Variables quantitatives", nums, default=nums)
             if choix_nums:
                 desc = su.decrire_numeriques(df, choix_nums)
-                st.dataframe(desc, use_container_width=True)
+                st.dataframe(desc, width="stretch")
                 st.download_button(
                     "Télécharger les descriptives (CSV)",
                     desc.to_csv().encode("utf-8-sig"),
@@ -205,7 +225,7 @@ with tab_desc:
                 if groupes_candidats:
                     g = st.selectbox("Optionnel : décrire par groupe", ["— Aucun —"] + groupes_candidats)
                     if g != "— Aucun —":
-                        st.dataframe(su.decrire_par_groupe(df, choix_nums, g), use_container_width=True)
+                        st.dataframe(su.decrire_par_groupe(df, choix_nums, g), width="stretch")
 
             st.divider()
             st.subheader("Graphiques")
@@ -220,14 +240,14 @@ with tab_desc:
                     classes = c1.slider("Nombre de classes", 5, 60, defaut, key="g_classes")
                     courbe = c2.selectbox("Courbe superposée", ["Aucune", "Densité (noyau)", "Loi normale ajustée"],
                                           key="g_courbe")
-                    st.altair_chart(gr.histogramme(df[vg], vg, classes, courbe), use_container_width=True)
+                    st.altair_chart(gr.histogramme(df[vg], vg, classes, courbe), width="stretch")
                 elif type_g == "Boîte à moustaches":
                     gb = st.selectbox("Séparer par groupe (facultatif)",
                                       ["— Aucun —"] + [c for c in groupes_candidats if c != vg], key="g_box_grp")
-                    st.altair_chart(gr.boite(df, vg, None if gb == "— Aucun —" else gb), use_container_width=True)
+                    st.altair_chart(gr.boite(df, vg, None if gb == "— Aucun —" else gb), width="stretch")
                     st.caption("Losange noir = moyenne ; les points isolés sont au-delà de 1,5 fois l'écart interquartile.")
                 else:
-                    st.altair_chart(gr.qq(df[vg], vg), use_container_width=True)
+                    st.altair_chart(gr.qq(df[vg], vg), width="stretch")
                     st.caption("Plus les points suivent la droite rouge, plus la distribution est proche de la normale.")
             except ValueError as e:
                 st.warning(f"Graphique impossible : {e}")
@@ -240,7 +260,7 @@ with tab_desc:
         if quals:
             vq = st.selectbox("Variable qualitative", quals, key="q_var")
             freq = su.frequences(df[vq])
-            st.dataframe(freq.round(2), use_container_width=True)
+            st.dataframe(freq.round(2), width="stretch")
             st.download_button(
                 "Télécharger les fréquences (CSV)",
                 freq.to_csv().encode("utf-8-sig"),
@@ -249,7 +269,7 @@ with tab_desc:
             )
             type_q = st.radio("Type de graphique", ["Barres", "Secteurs"], horizontal=True, key="q_type")
             try:
-                st.altair_chart(gr.frequences_graphique(freq, vq, type_q), use_container_width=True)
+                st.altair_chart(gr.frequences_graphique(freq, vq, type_q), width="stretch")
                 if len(freq.drop(index="Manquant", errors="ignore")) > 20:
                     st.caption("Seules les 20 modalités les plus fréquentes sont représentées.")
             except ValueError as e:
@@ -267,7 +287,7 @@ with tab_desc:
                               ["— Aucun —"] + [c for c in groupes_candidats if c not in (nx, ny)], key="n_g")
             droite = st.checkbox("Afficher la droite de régression", value=True, key="n_droite")
             try:
-                st.altair_chart(gr.nuage(df, nx, ny, None if ng == "— Aucun —" else ng, droite), use_container_width=True)
+                st.altair_chart(gr.nuage(df, nx, ny, None if ng == "— Aucun —" else ng, droite), width="stretch")
                 _, _, _, lg = su.correlations(df, [nx, ny])
                 if not lg.empty and pd.notna(lg.iloc[0]["r"]):
                     st.caption(f"Corrélation de Pearson : r = {lg.iloc[0]['r']:.3f} "
@@ -294,7 +314,7 @@ with tab_tests:
         if res_norm.empty:
             st.warning("Effectif insuffisant ou variable constante : test non calculable.")
         else:
-            st.dataframe(res_norm, use_container_width=True)
+            st.dataframe(res_norm, width="stretch")
     else:
         st.warning("Aucune variable numérique détectée.")
 
@@ -303,18 +323,22 @@ with tab_tests:
     groupes_candidats = su.colonnes_groupes(df)
     if nums and groupes_candidats:
         y = st.selectbox("Variable quantitative", nums, key="compar_y")
-        g = st.selectbox("Variable de regroupement", groupes_candidats, key="compar_g")
+        g_options = [c for c in groupes_candidats if c != y]
+        if not g_options:
+            st.info("Aucune variable de regroupement différente de la variable quantitative.")
+            st.stop()
+        g = st.selectbox("Variable de regroupement", g_options, key="compar_g")
         groupes = su.groupes_numeriques(df, y, g)
         groupes = {k: v for k, v in groupes.items() if len(v) > 0}
         if len(groupes) >= 2:
             st.write("Descriptifs par groupe")
-            st.dataframe(su.descriptifs_groupes(groupes), use_container_width=True)
+            st.dataframe(su.descriptifs_groupes(groupes), width="stretch")
             if len(groupes) == 2:
                 noms = list(groupes)
                 try:
                     r = su.comparer_deux(groupes[noms[0]], groupes[noms[1]], alpha=alpha)
                     st.write(f"**Test recommandé : {r['reco']}** — {r['motif']}")
-                    st.dataframe(r["tests"], use_container_width=True)
+                    st.dataframe(r["tests"], width="stretch")
                     st.write(f"Différence des moyennes : {r['diff']:.4g}")
                     st.write(f"IC à {int((1-alpha)*100)} % : [{r['ic'][0]:.4g} ; {r['ic'][1]:.4g}]")
                     st.write(su.conclusion(r["p_reco"], alpha, f"La comparaison selon {y}"))
@@ -324,14 +348,14 @@ with tab_tests:
                 try:
                     r = su.comparer_k(groupes, alpha=alpha)
                     st.write(f"**Test recommandé : {r['reco']}** — {r['motif']}")
-                    st.dataframe(r["tests"], use_container_width=True)
+                    st.dataframe(r["tests"], width="stretch")
                     st.write(su.conclusion(r["p_reco"], alpha, f"La différence de {y} entre les groupes"))
                     if r.get("posthoc") == "Tukey HSD" and r["p_reco"] < alpha:
                         st.subheader("Comparaisons post-hoc de Tukey")
-                        st.dataframe(su.posthoc_tukey(groupes, alpha=alpha), use_container_width=True)
+                        st.dataframe(su.posthoc_tukey(groupes, alpha=alpha), width="stretch")
                     elif r["p_reco"] < alpha:
                         st.subheader("Comparaisons post-hoc par paires (correction de Holm)")
-                        st.dataframe(su.posthoc_paires(groupes, test="welch" if r["reco"] == "ANOVA de Welch" else "mannwhitney", methode="holm", alpha=alpha), use_container_width=True)
+                        st.dataframe(su.posthoc_paires(groupes, test="welch" if r["reco"] == "ANOVA de Welch" else "mannwhitney", methode="holm", alpha=alpha), width="stretch")
                 except Exception as e:
                     st.error(f"Comparaison impossible : {e}")
         else:
@@ -349,12 +373,12 @@ with tab_assoc:
             try:
                 r = su.tester_khi2(df, a, b)
                 st.write("Tableau des effectifs")
-                st.dataframe(r["effectifs"], use_container_width=True)
+                st.dataframe(r["effectifs"], width="stretch")
                 st.write("Pourcentages par ligne (%)")
-                st.dataframe(r["pct_ligne"].round(2), use_container_width=True)
+                st.dataframe(r["pct_ligne"].round(2), width="stretch")
                 st.write("Effectifs théoriques")
-                st.dataframe(r["attendus"].round(2), use_container_width=True)
-                st.dataframe(r["tests"], use_container_width=True)
+                st.dataframe(r["attendus"].round(2), width="stretch")
+                st.dataframe(r["tests"], width="stretch")
                 st.metric("V de Cramér", f"{r['cramer_v']:.3f}")
                 st.write(f"Cellules avec effectif théorique inférieur à 5 : {r['pct_attendus_faibles']:.1f} %")
                 st.write(su.conclusion(r["p"], alpha, f"L'association entre {a} et {b}"))
@@ -373,11 +397,11 @@ with tab_assoc:
             if st.button("Calculer les corrélations"):
                 rmat, pmat, nmat, longue = su.correlations(df, cols_corr, methode=methode)
                 st.write("Coefficients de corrélation")
-                st.dataframe(rmat.round(3), use_container_width=True)
+                st.dataframe(rmat.round(3), width="stretch")
                 st.write("p-values")
-                st.dataframe(pmat.round(4), use_container_width=True)
+                st.dataframe(pmat.round(4), width="stretch")
                 st.write("Paires classées par force de corrélation")
-                st.dataframe(longue, use_container_width=True)
+                st.dataframe(longue, width="stretch")
     else:
         st.info("Il faut au moins deux variables numériques.")
 
@@ -400,7 +424,7 @@ with tab_reg:
                     m3.metric("R² ajusté", f"{resume['r2_aj']:.3f}")
                     m4.metric("p-value globale", su.formater_p(resume["p_f"]))
                     st.write("Coefficients et intervalles de confiance")
-                    st.dataframe(coef, use_container_width=True)
+                    st.dataframe(coef, width="stretch")
                     st.write(f"Test global : {su.conclusion(resume['p_f'], alpha, 'Le modèle')}")
                     st.write("Diagnostics")
                     st.json({k: (None if pd.isna(v) else float(v)) for k, v in diag.items()})
@@ -421,7 +445,7 @@ with tab_alpha:
             st.metric("Alpha de Cronbach", f"{alpha_c:.3f}")
             st.write(f"Répondants complets utilisés : {n}")
             st.write(f"Interprétation indicative : fiabilité {su.lire_alpha(alpha_c)}")
-            st.dataframe(detail, use_container_width=True)
+            st.dataframe(detail, width="stretch")
         except Exception as e:
             st.error(f"Calcul impossible : {e}")
 
@@ -588,9 +612,9 @@ with tab_rapport:
                     st.markdown(f"- {item}")
             elif typ == "table":
                 st.caption(bloc["legende"])
-                st.dataframe(bloc["df"], use_container_width=True)
+                st.dataframe(bloc["df"], width="stretch")
             elif typ == "fig":
-                st.image(bloc["png"], caption=bloc["legende"], use_container_width=True)
+                st.image(bloc["png"], caption=bloc["legende"], width="stretch")
         try:
             docx_bytes = rp.exporter_docx(blocs_r, meta_r)
             st.download_button(

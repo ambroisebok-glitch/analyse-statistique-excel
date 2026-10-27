@@ -30,7 +30,7 @@ def histogramme(s, nom, classes=20, courbe="Aucune"):
     d = pd.DataFrame({"debut": bords[:-1], "fin": bords[1:], "effectif": comptes})
     axe_x = alt.X("debut:Q", title=nom)
     barres = alt.Chart(d).mark_bar(color=BLEU, opacity=0.75, stroke="white").encode(
-        x=axe_x, x2="fin:Q", y=alt.Y("effectif:Q", title="Effectif"),
+        x=axe_x, x2="fin:Q", y=alt.Y("effectif:Q", title="Effectif"), y2=alt.datum(0),
         tooltip=[alt.Tooltip("debut:Q", title="De", format=".4g"),
                  alt.Tooltip("fin:Q", title="À", format=".4g"),
                  alt.Tooltip("effectif:Q", title="Effectif")])
