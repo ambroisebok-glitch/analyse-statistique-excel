@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RévisePro – Résumés de cours, QCM et assistant IA pour réviser</title>
+<meta name="description" content="RévisePro transforme vos cours PDF ou Word en résumés approfondis, QCM jusqu'à 100 questions par chapitre et assistant IA. Répétitions et démarches en ligne (nationalité, passeport, casier judiciaire) : +228 96286244.">
+<meta name="keywords" content="réviser cours, résumé de cours IA, QCM en ligne, quiz cours, assistant IA étudiant, répétiteur Togo, démarches en ligne Togo, passeport, nationalité, casier judiciaire, traitement de données">
+<meta name="author" content="BOKOUMBO Tibetobe Ambroise">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<!-- ⚠️ Remplace https://VOTRE-SITE.netlify.app par l'adresse réelle de CE site vitrine (dans tout le fichier) -->
+<link rel="canonical" href="https://VOTRE-SITE.netlify.app/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="RévisePro">
+<meta property="og:title" content="RévisePro – Résumés de cours, QCM et assistant IA">
+<meta property="og:description" content="Dépose ton cours, obtiens un résumé approfondi, des QCM par chapitre (jusqu'à 100 questions) et un assistant IA.">
+<meta property="og:url" content="https://VOTRE-SITE.netlify.app/">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#4338CA">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+
+<script type="application/ld+json">
+{
+ "@context":"https://schema.org",
+ "@graph":[
+  {"@type":"WebApplication","name":"RévisePro","url":"https://revisepro.streamlit.app",
+   "description":"Application web qui transforme vos cours en résumés approfondis, QCM par chapitre et assistant IA.",
+   "applicationCategory":"EducationalApplication","operatingSystem":"Web","inLanguage":"fr",
+   "author":{"@type":"Person","name":"BOKOUMBO Tibetobe Ambroise","email":"ambroisebok@gmail.com","telephone":"+22891942948"}},
+  {"@type":"ProfessionalService","name":"RévisePro – Répétitions et démarches en ligne",
+   "description":"Répétitions, accompagnement dans les demandes en ligne (nationalité, passeport, casier judiciaire) et traitement de données.",
+   "telephone":["+22896286244","+22891942948"],"email":"ambroisebok@gmail.com","areaServed":"TG","url":"https://VOTRE-SITE.netlify.app/"},
+  {"@type":"FAQPage","mainEntity":[
+   {"@type":"Question","name":"RévisePro, c'est quoi ?","acceptedAnswer":{"@type":"Answer","text":"Une application qui lit votre cours (PDF ou Word) et génère un résumé approfondi, des QCM corrigés et un assistant IA pour poser vos questions."}},
+   {"@type":"Question","name":"Combien de questions peut contenir un QCM ?","acceptedAnswer":{"@type":"Answer","text":"Jusqu'à 100 questions, sur tout le cours ou chapitre par chapitre, avec correction détaillée et note sur 20."}},
+   {"@type":"Question","name":"Peut-on exporter le résumé ?","acceptedAnswer":{"@type":"Answer","text":"Oui, en Word (.docx), en HTML imprimable en PDF et en Markdown, avec les formules mathématiques."}},
+   {"@type":"Question","name":"Comment contacter pour des répétitions ?","acceptedAnswer":{"@type":"Answer","text":"Pour des besoins de répétition, contactez le +228 96286244."}},
+   {"@type":"Question","name":"Accompagnez-vous pour les démarches en ligne ?","acceptedAnswer":{"@type":"Answer","text":"Oui : nationalité, passeport, casier judiciaire, ainsi que le traitement de données. Contact : +228 96286244 ou +228 91942948."}}
+  ]}
+ ]
+}
+</script>
+
+<style>
+:root{--v:#4F46E5;--vf:#4338CA;--n:#1E1B4B;--g:#4B5563;--bg:#F8F9FF}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1F2937;background:#fff;line-height:1.6}
+a{color:var(--v)}
+header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid #E5E7EB}
+.nav{max-width:1080px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.2rem;gap:1rem}
+.logo{display:flex;align-items:center;gap:.6rem;font-weight:800;font-size:1.2rem;color:var(--n);text-decoration:none}
+.logo span{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#4F46E5,#7C3AED)}
+nav a{margin-left:1.1rem;text-decoration:none;color:var(--g);font-weight:500;font-size:.95rem}
+nav a:hover{color:var(--v)}
+.btn{display:inline-block;padding:.8rem 1.4rem;border-radius:12px;font-weight:700;text-decoration:none;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;box-shadow:0 6px 16px rgba(79,70,229,.3);transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}.btn.clair{background:#fff;color:var(--vf);box-shadow:none;border:1px solid #C7D2FE}
+.btn.wa{background:#16A34A;box-shadow:none}
+.hero{background:linear-gradient(135deg,#4338CA,#7C3AED 60%,#A855F7);color:#fff;text-align:center;padding:4.5rem 1.2rem 5rem}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);margin:0 auto .8rem;max-width:820px;line-height:1.15;letter-spacing:-.02em}
+.hero p{max-width:640px;margin:0 auto 1.8rem;color:#E0E7FF;font-size:1.15rem}
+.hero .btn{background:#fff;color:var(--vf);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.hero .btn.clair{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);box-shadow:none}
+section{max-width:1080px;margin:auto;padding:3.5rem 1.2rem}
+h2{font-size:1.9rem;color:var(--n);margin:0 0 .4rem;letter-spacing:-.02em}
+.sous{color:var(--g);margin:0 0 2rem}
+.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.1rem}
+.carte{border:1px solid #E5E7EB;border-radius:18px;padding:1.4rem;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:transform .15s,box-shadow .15s}
+.carte:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(79,70,229,.13)}
+.ico{width:50px;height:50px;border-radius:14px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin-bottom:.8rem}
+.carte h3{margin:.1rem 0 .4rem;color:var(--n);font-size:1.12rem}.carte p{margin:0;color:var(--g);font-size:.95rem}
+.fond{background:var(--bg);max-width:none}.fond>div{max-width:1080px;margin:auto}
+.etapes{counter-reset:e;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.1rem}
+.etapes div{position:relative;background:#fff;border:1px solid #E5E7EB;border-radius:18px;padding:1.4rem 1.4rem 1.4rem 4rem}
+.etapes div::before{counter-increment:e;content:counter(e);position:absolute;left:1.1rem;top:1.3rem;width:34px;height:34px;border-radius:50%;background:var(--v);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.etapes b{color:var(--n)}.etapes p{margin:.2rem 0 0;color:var(--g);font-size:.93rem}
+.contact{background:linear-gradient(135deg,#1E1B4B,#312E81);color:#E0E7FF;max-width:none;text-align:center}
+.contact h2{color:#fff}.contact .sous{color:#C7D2FE}.contact a.t{color:#FDE68A;font-weight:700;text-decoration:none}
+.contact p{max-width:680px;margin:.5rem auto}
+details{border:1px solid #E5E7EB;border-radius:14px;padding:1rem 1.2rem;margin-bottom:.7rem;background:#fff}
+summary{cursor:pointer;font-weight:600;color:var(--n)}details p{margin:.6rem 0 0;color:var(--g)}
+footer{background:#0F0D2E;color:#A5B4FC;text-align:center;padding:1.6rem 1rem;font-size:.9rem}
+footer a{color:#fff;text-decoration:none;font-weight:600}
+.note{font-size:.8rem;color:#A5B4FC;margin-top:1rem}
+@media(max-width:640px){nav{display:none}}
+</style>
+</head>
+<body>
+<header><div class="nav">
+ <a class="logo" href="#"><span>📚</span>RévisePro</a>
+ <nav><a href="#fonctions">Fonctions</a><a href="#comment">Comment ça marche</a><a href="#services">Services</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></nav>
+ <a class="btn" href="https://revisepro.streamlit.app" style="padding:.55rem 1.1rem">Ouvrir l'application</a>
+</div></header>
+
+<main>
+<div class="hero">
+ <h1>Révise tes cours plus vite, avec l'intelligence artificielle</h1>
+ <p>Dépose ton cours en PDF ou Word : obtiens un résumé approfondi, des QCM corrigés par chapitre et un assistant qui répond à tes questions.</p>
+ <a class="btn" href="https://revisepro.streamlit.app">🚀 Essayer gratuitement</a>
+ <a class="btn clair" href="#services">Répétitions &amp; démarches</a>
+</div>
+
+<section id="fonctions">
+ <h2>Tout pour réviser efficacement</h2>
+ <p class="sous">Une seule application, du cours brut à l'examen blanc.</p>
+ <div class="grille">
+  <article class="carte"><div class="ico">📝</div><h3>Résumés approfondis</h3><p>Une fiche par chapitre : définitions, théorèmes, démonstrations, exemples résolus et pièges. Formules mathématiques comprises.</p></article>
+  <article class="carte"><div class="ico">✅</div><h3>QCM jusqu'à 100 questions</h3><p>Sur tout le cours ou chapitre par chapitre, avec correction détaillée, note sur 20 et résultats par chapitre.</p></article>
+  <article class="carte"><div class="ico">💬</div><h3>Assistant IA</h3><p>Pose tes questions sur ton cours, demande des explications simples ou des exercices corrigés.</p></article>
+  <article class="carte"><div class="ico">📤</div><h3>Export du résumé</h3><p>Télécharge ta fiche en Word, en PDF (via HTML) ou en Markdown pour réviser hors ligne.</p></article>
+  <article class="carte"><div class="ico">👤</div><h3>Compte personnel</h3><p>Retrouve tes cours, résumés, QCM et notes à tout moment.</p></article>
+  <article class="carte"><div class="ico">🧮</div><h3>Matières scientifiques</h3><p>Lecture visuelle des PDF : formules, schémas et documents scannés sont pris en compte.</p></article>
+ </div>
+</section>
+
+<section class="fond" id="comment"><div>
+ <h2>Comment ça marche ?</h2>
+ <p class="sous">Trois minutes suffisent pour démarrer.</p>
+ <div class="etapes">
+  <div><b>Charge ton cours</b><p>PDF ou Word. Les chapitres sont détectés automatiquement.</p></div>
+  <div><b>Génère</b><p>Résumé approfondi, QCM sur tout le cours ou par chapitre.</p></div>
+  <div><b>Révise et progresse</b><p>Corrige-toi, refais tes erreurs, discute avec l'assistant.</p></div>
+ </div>
+</div></section>
+
+<section id="services">
+ <h2>Besoin d'un accompagnement humain ?</h2>
+ <p class="sous">Au-delà de l'application, nous sommes là pour vous aider.</p>
+ <div class="grille">
+  <article class="carte"><div class="ico">🎓</div><h3>Répétitions</h3><p>Pour des besoins de répétition, vous pouvez contacter le <b>+228 96286244</b>.</p></article>
+  <article class="carte"><div class="ico">🗂️</div><h3>Démarches en ligne</h3><p>Nous vous accompagnons dans vos demandes en ligne : <b>nationalité, passeport, casier judiciaire</b>.</p></article>
+  <article class="carte"><div class="ico">📊</div><h3>Traitement de données</h3><p>Saisie, nettoyage, analyse et mise en forme de vos données.</p></article>
+ </div>
+ <p style="margin-top:1.4rem"><b>Contact :</b> <a href="tel:+22896286244">+228 96286244</a> ou <a href="tel:+22891942948">+228 91942948</a></p>
+</section>
+
+<section id="faq">
+ <h2>Questions fréquentes</h2><p class="sous">Les réponses rapides.</p>
+ <details><summary>RévisePro, c'est quoi ?</summary><p>Une application qui lit votre cours (PDF ou Word) et génère un résumé approfondi, des QCM corrigés et un assistant IA pour poser vos questions.</p></details>
+ <details><summary>Combien de questions peut contenir un QCM ?</summary><p>Jusqu'à 100 questions, sur tout le cours ou chapitre par chapitre, avec correction détaillée et note sur 20.</p></details>
+ <details><summary>Peut-on exporter le résumé ?</summary><p>Oui, en Word (.docx), en HTML imprimable en PDF et en Markdown, avec les formules mathématiques.</p></details>
+ <details><summary>Comment contacter pour des répétitions ?</summary><p>Pour des besoins de répétition, contactez le +228 96286244.</p></details>
+ <details><summary>Accompagnez-vous pour les démarches en ligne ?</summary><p>Oui : nationalité, passeport, casier judiciaire, ainsi que le traitement de données. Contact : +228 96286244 ou +228 91942948.</p></details>
+</section>
+
+<section class="contact" id="contact">
+ <h2>Contactez-nous</h2>
+ <p class="sous">Répétitions, démarches en ligne, traitement de données, questions sur l'application.</p>
+ <p>📞 <a class="t" href="tel:+22896286244">+228 96286244</a> · <a class="t" href="tel:+22891942948">+228 91942948</a></p>
+ <p>✉️ <a class="t" href="mailto:ambroisebok@gmail.com">ambroisebok@gmail.com</a></p>
+ <p style="margin-top:1.4rem"><a class="btn wa" href="https://wa.me/22896286244">💬 WhatsApp</a>
+ <a class="btn" href="https://revisepro.streamlit.app">Ouvrir l'application</a></p>
+ <p class="note">Service d'accompagnement privé, non affilié à l'administration.</p>
+</section>
+</main>
+
+<footer>
+ © <span id="an"></span> RévisePro · Conçu par <b>BOKOUMBO Tibetobe Ambroise</b> ·
+ <a href="mailto:ambroisebok@gmail.com">ambroisebok@gmail.com</a> ·
+ <a href="tel:+22891942948">+228 91942948</a> · <a href="tel:+22896286244">+228 96286244</a>
+</footer>
+<script>document.getElementById("an").textContent=new Date().getFullYear();</script>
+</body>
+</html>

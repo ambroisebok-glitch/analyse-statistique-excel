@@ -1,15 +1,4 @@
-streamlit>=1.40
-pandas
-numpy
-scipy
-statsmodels
-openpyxl
-xlrd
-altair
-matplotlib
-python-docx
-Pillow
+streamlit
 anthropic
-google-genai>=1.0.0,<2.0.0
 pypdf
-
+python-docx
