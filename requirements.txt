@@ -1,4 +1,7 @@
 streamlit
 anthropic
+google-genai
 pypdf
 python-docx
+markdown
+matplotlib
