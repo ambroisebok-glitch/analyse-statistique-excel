@@ -1,5 +1,5 @@
 """
-RévisePro (version Gemini) – cours (PDF/Word) -> résumé approfondi, QCM par chapitre (jusqu'à 100),
+Étudiants Learn (version Gemini) – cours (PDF/Word) -> résumé approfondi, QCM par chapitre (jusqu'à 100),
 assistant IA, comptes utilisateurs et exports.
 Auteur : BOKOUMBO Tibetobe Ambroise
 Contact : ambroisebok@gmail.com | +228 91942948
@@ -43,15 +43,15 @@ AUTEUR = "BOKOUMBO Tibetobe Ambroise"
 EMAIL = "ambroisebok@gmail.com"
 TEL_REP = ("+228 96286244", "+22896286244")   # répétitions + démarches
 TEL_AMB = ("+228 91942948", "+22891942948")   # contact principal
-APP_URL = "https://revisepro.streamlit.app"
-SEO_TITRE = "RévisePro – Résumés de cours, QCM et assistant IA pour réviser"
-SEO_DESC = ("RévisePro transforme vos cours PDF ou Word en résumés approfondis, QCM jusqu'à 100 questions "
-            "par chapitre avec correction, et un assistant IA pour réviser. Répétitions et démarches en ligne "
-            "(nationalité, passeport, casier judiciaire) : +228 96286244.")
+APP_URL = "https://etudiantslearn.streamlit.app/"
+SEO_TITRE = "Étudiants Learn – Résumés de cours, QCM et assistant IA"
+SEO_DESC = ("Étudiants Learn aide les étudiants à réviser leurs cours PDF ou Word grâce à des résumés "
+            "approfondis, des QCM corrigés jusqu'à 100 questions et un assistant IA pour comprendre les cours "
+            "et préparer les examens.")
 
 st.set_page_config(
-    page_title=SEO_TITRE, page_icon="📚", layout="wide", initial_sidebar_state="expanded",
-    menu_items={"About": f"**RévisePro** — conçu par {AUTEUR} · {EMAIL} · {TEL_AMB[0]}"})
+    page_title=SEO_TITRE, page_icon="🎓", layout="wide", initial_sidebar_state="expanded",
+    menu_items={"About": f"**Étudiants Learn** — conçu par {AUTEUR} · {EMAIL} · {TEL_AMB[0]}"})
 
 st.markdown(
     """
@@ -140,7 +140,7 @@ def injecter_seo():
     donnees = {
         "titre": SEO_TITRE, "desc": SEO_DESC, "url": APP_URL,
         "json": {
-            "@context": "https://schema.org", "@type": "WebApplication", "name": "RévisePro",
+            "@context": "https://schema.org", "@type": "WebApplication", "name": "Étudiants Learn",
             "url": APP_URL, "description": SEO_DESC, "inLanguage": "fr",
             "applicationCategory": "EducationalApplication", "operatingSystem": "Web",
             "author": {"@type": "Person", "name": AUTEUR, "email": EMAIL, "telephone": TEL_AMB[0]},
@@ -601,7 +601,7 @@ th{background:#EEF2FF}code{background:#F3F4F6;padding:.1rem .3rem;border-radius:
 <p class="noprint" style="background:#EEF2FF;padding:.6rem 1rem;border-radius:8px;font-family:sans-serif">
 💡 Pour obtenir un PDF : <b>Ctrl+P</b> (ou Partager → Imprimer) puis « Enregistrer au format PDF ».</p>
 __CORPS__
-<p class="note">Généré par RévisePro · __DATE__</p></body></html>"""
+<p class="note">Généré par Étudiants Learn · __DATE__</p></body></html>"""
     return (modele.replace("__TITRE__", html.escape(titre)).replace("__CORPS__", corps)
             .replace("__DATE__", maintenant()))
 
@@ -905,7 +905,7 @@ def cle_api():
 def pied():
     st.markdown(
         f'''<div class="barre-pied">
-        📚 <b>RévisePro</b> · Conçu par <b>{AUTEUR}</b><span class="sep">|</span>
+        📚 <b>Étudiants Learn</b> · Conçu par <b>{AUTEUR}</b><span class="sep">|</span>
         ✉️ <a href="mailto:{EMAIL}">{EMAIL}</a><span class="sep">|</span>
         📞 <a href="tel:{TEL_AMB[1]}">{TEL_AMB[0]}</a> · <a href="tel:{TEL_REP[1]}">{TEL_REP[0]}</a><br>
         <span class="acc">🎓 Répétitions : <a href="tel:{TEL_REP[1]}">{TEL_REP[0]}</a></span><span class="sep">|</span>
@@ -914,7 +914,7 @@ def pied():
         </div>''', unsafe_allow_html=True)
 
 
-def boutons_contact(numero, message="Bonjour, je vous contacte depuis RévisePro."):
+def boutons_contact(numero, message="Bonjour, je vous contacte depuis Étudiants Learn."):
     from urllib.parse import quote
     return (f'<a class="btn" href="tel:{numero[1]}">📞 Appeler {numero[0]}</a>'
             f'<a class="btn wa" target="_blank" href="https://wa.me/{numero[1].lstrip("+")}?text={quote(message)}">'
@@ -981,7 +981,7 @@ def reset_travail(cours):
 # Pages
 # ----------------------------------------------------------------------------
 def page_connexion():
-    entete("📚 RévisePro", "Transforme tes cours PDF ou Word en résumés approfondis, QCM par chapitre "
+    entete("📚 Étudiants Learn", "Transforme tes cours PDF ou Word en résumés approfondis, QCM par chapitre "
            "et assistant IA pour réviser plus vite et mieux.")
     st.markdown(
         '''<div class="cartes">
@@ -1270,7 +1270,7 @@ def page_qcm(cle):
         st.rerun()
 
 
-SYSTEME_CHAT = """Tu es RévisePro, un tuteur bienveillant, précis et pédagogue. L'étudiant t'a fourni son cours.
+SYSTEME_CHAT = """Tu es Étudiants Learn, un tuteur bienveillant, précis et pédagogue. L'étudiant t'a fourni son cours.
 - Réponds en français, en t'appuyant d'abord sur le contenu du cours ; si tu sors du cours, dis-le clairement.
 - Explique étape par étape, donne des exemples, et propose des exercices corrigés si on te le demande.
 - Pour les maths, utilise LaTeX : $...$ en ligne et $$...$$ en bloc (jamais \\( \\) ni \\[ \\]).
@@ -1383,7 +1383,7 @@ if "user" not in st.session_state:
     st.stop()
 
 with st.sidebar:
-    st.markdown('<div class="marque"><div class="logo">📚</div><b>RévisePro</b></div>', unsafe_allow_html=True)
+    st.markdown('<div class="marque"><div class="logo">📚</div><b>Étudiants Learn</b></div>', unsafe_allow_html=True)
     st.caption(f"👤 {st.session_state.user['nom']}")
     page = st.radio("Navigation", PAGES, label_visibility="collapsed", key="nav")
     st.divider()
