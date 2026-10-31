@@ -30,7 +30,8 @@ from pypdf import PdfReader
 # ----------------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------------
-MODEL = "gemini-3.8-flash"
+# Modèle préféré (modifiable sans toucher au code via la variable GEMINI_MODEL / secrets Streamlit)
+MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 MAX_CHARS = 700_000                 # le cours est lu en entier (≈ 175 000 tokens)
 MAX_PDF_OCTETS = 18 * 1024 * 1024   # taille max d'un PDF envoyé directement à Gemini
 LOT_QCM = 20                        # questions générées par appel
@@ -333,20 +334,28 @@ def lire_fichier(fichier) -> dict:
 # ----------------------------------------------------------------------------
 @st.cache_data(ttl=3600, show_spinner=False)
 def modeles_disponibles(cle: str) -> list:
-    """Modèle préféré d'abord, puis les autres modèles 'flash' du compte."""
-    noms = [MODEL]
+    """Modèle préféré d'abord, puis les modèles 'flash' du compte, du plus récent au plus ancien."""
+    trouves = []
     try:
         client = genai.Client(api_key=cle)
+        exclus = ("image", "tts", "live", "audio", "embedding", "robotics", "thinking")
         for m in client.models.list():
             n = m.name.replace("models/", "")
             actions = getattr(m, "supported_actions", None) or ["generateContent"]
-            exclus = ("image", "tts", "live", "audio", "embedding", "robotics")
-            if ("flash" in n and "generateContent" in actions
-                    and not any(x in n for x in exclus) and n not in noms):
-                noms.append(n)
+            if "flash" in n and "generateContent" in actions and not any(x in n for x in exclus):
+                trouves.append(n)
     except Exception:
         pass
-    return noms[:5]
+
+    def tri(n):
+        v = re.search(r"gemini-(\d+(?:\.\d+)?)", n)
+        version = float(v.group(1)) if v else 0.0
+        stable = not any(x in n for x in ("preview", "exp"))
+        return (version, stable, "lite" not in n)
+
+    trouves.sort(key=tri, reverse=True)
+    noms = [MODEL] + [n for n in trouves if n != MODEL]
+    return noms[:8]
 
 
 def _temporaire(msg: str) -> bool:
