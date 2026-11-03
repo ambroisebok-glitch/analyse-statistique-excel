@@ -1,6 +1,6 @@
 """
 Étudiants Learn (version Gemini) – cours (PDF/Word) -> résumé approfondi, QCM par chapitre (jusqu'à 100),
-assistant IA, comptes utilisateurs et exports.
+assistant IA, comptes utilisateurs et exports (PDF, Word, HTML, Markdown).
 Auteur : BOKOUMBO Tibetobe Ambroise
 Contact : ambroisebok@gmail.com | +228 91942948
 """
@@ -14,6 +14,7 @@ import random
 import re
 import secrets
 import sqlite3
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -60,11 +61,23 @@ st.markdown(
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root { --ink:#0F172A; --muted:#64748B; --line:#E2E8F0; --bg:#F8FAFC;
         --accent:#4338CA; --accent-d:#3730A3; --accent-l:#EEF2FF; }
-.stApp { font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink); }
+.stApp { font-family:'Inter',sans-serif; color:var(--ink);
+  background-color:#F6F7FB;
+  background-image:
+    radial-gradient(900px 520px at 6% -8%, rgba(67,56,202,.10), transparent 65%),
+    radial-gradient(800px 500px at 100% 8%, rgba(14,165,233,.07), transparent 65%),
+    url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cg font-family='Georgia,serif' fill='%234338CA' fill-opacity='.075'%3E%3Ctext x='28' y='70' font-size='34'%3E∑%3C/text%3E%3Ctext x='170' y='52' font-size='22' font-style='italic'%3Ef(x) = ∫ g(t)dt%3C/text%3E%3Ctext x='300' y='130' font-size='38'%3Eπ%3C/text%3E%3Ctext x='60' y='190' font-size='24' font-style='italic'%3E√(a²+b²)%3C/text%3E%3Ctext x='250' y='230' font-size='30'%3EΔ%3C/text%3E%3Ctext x='30' y='320' font-size='22' font-style='italic'%3Ee^(iπ) + 1 = 0%3C/text%3E%3Ctext x='230' y='350' font-size='34'%3E∞%3C/text%3E%3Ctext x='340' y='300' font-size='26'%3Eα β%3C/text%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(rgba(67,56,202,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(67,56,202,.045) 1px, transparent 1px);
+  background-size:auto, auto, 420px 420px, 32px 32px, 32px 32px;
+  background-attachment:fixed; }
 #MainMenu, footer { visibility:hidden; }
 header[data-testid="stHeader"] { background:transparent; }
 iframe[height="0"] { display:none; }
-.block-container { padding-top:2rem; padding-bottom:6.5rem; max-width:1080px; }
+.block-container { padding-top:2rem; padding-bottom:6.5rem; max-width:1080px;
+  background:rgba(255,255,255,.80); backdrop-filter:blur(6px);
+  border:1px solid var(--line); border-radius:20px; margin-top:1rem;
+  box-shadow:0 10px 40px rgba(15,23,42,.05); }
 
 /* Barre latérale */
 [data-testid="stSidebar"] { background:#FFFFFF; border-right:1px solid var(--line); }
@@ -159,6 +172,32 @@ div[data-testid="stForm"] { border:1px solid var(--line); border-radius:14px; ba
 [data-testid="stFileUploaderDropzone"] { border:1.5px dashed #CBD5E1; background:#fff; border-radius:12px; }
 [data-testid="stChatMessage"] { background:#fff; border:1px solid var(--line); border-radius:12px; }
 [data-testid="stVerticalBlockBorderWrapper"] { border-radius:12px; }
+
+/* Services */
+.services { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.1rem;
+  margin:.6rem 0 1.6rem 0; }
+.service { background:#fff; border:1px solid var(--line); border-radius:16px; padding:1.3rem 1.3rem 1.1rem;
+  display:flex; flex-direction:column; transition:box-shadow .2s, transform .2s, border-color .2s; }
+.service:hover { box-shadow:0 12px 30px rgba(67,56,202,.10); transform:translateY(-2px);
+  border-color:#C7D2FE; }
+.service .ico { width:44px; height:44px; border-radius:12px; background:var(--accent-l);
+  color:var(--accent); display:flex; align-items:center; justify-content:center; margin-bottom:.9rem; }
+.service .ico svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round; }
+.service h4 { margin:0 0 .35rem 0; font-size:1.05rem; font-weight:700; color:var(--ink); }
+.service > p { margin:0 0 .8rem 0; color:#475569; font-size:.88rem; line-height:1.6; }
+.service ul { margin:0 0 1rem 0; padding:0; list-style:none; display:grid; gap:.35rem; }
+.service li { font-size:.85rem; color:#334155; padding-left:1.15rem; position:relative; }
+.service li::before { content:""; position:absolute; left:0; top:.5em; width:6px; height:6px;
+  border-radius:50%; background:var(--accent); }
+.service .contact { margin-top:auto; padding-top:.8rem; border-top:1px solid var(--line);
+  font-size:.8rem; color:var(--muted); }
+.service .contact b { color:var(--ink); }
+.parcours { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem;
+  margin:.5rem 0 1.5rem 0; }
+.parcours div { border-left:3px solid var(--accent); padding:.2rem 0 .2rem .9rem; }
+.parcours b { display:block; font-size:.92rem; }
+.parcours span { font-size:.84rem; color:#475569; line-height:1.5; }
 
 /* Barre d'information en bas */
 .barre-pied { position:fixed; left:0; right:0; bottom:0; z-index:99; background:#0F172A; color:#94A3B8;
@@ -618,7 +657,7 @@ def resume_en_markdown(r: dict) -> str:
 
 
 # ----------------------------------------------------------------------------
-# Exports : HTML (impression PDF avec formules), Word (formules en images)
+# Exports : HTML, Word et PDF (formules rendues en images)
 # ----------------------------------------------------------------------------
 def slug(t: str) -> str:
     return re.sub(r"[^a-zA-Z0-9]+", "_", t).strip("_")[:50] or "resume"
@@ -672,7 +711,7 @@ def _nettoyer_latex(e: str) -> str:
 
 @lru_cache(maxsize=2048)
 def formule_png(expr: str, taille: int):
-    """Rend une formule LaTeX en PNG avec matplotlib. Retourne (octets, largeur_px) ou None."""
+    """Rend une formule LaTeX en PNG avec matplotlib. Retourne (octets, largeur_px, hauteur_px) ou None."""
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -685,7 +724,8 @@ def formule_png(expr: str, taille: int):
         fig.savefig(buf, format="png", dpi=DPI_FORMULE, transparent=True,
                     bbox_inches="tight", pad_inches=0.03)
         data = buf.getvalue()
-        return data, Image.open(io.BytesIO(data)).size[0]
+        largeur, hauteur = Image.open(io.BytesIO(data)).size
+        return data, largeur, hauteur
     except Exception:
         return None
 
@@ -693,6 +733,7 @@ def formule_png(expr: str, taille: int):
 RE_INLINE = re.compile(r"(\$\$.+?\$\$|\$[^$\n]+?\$|\*\*.+?\*\*|(?<!\*)\*[^*\n]+?\*(?!\*)|`[^`\n]+`)", re.S)
 
 
+# ---- Word ------------------------------------------------------------------
 def _formule(par, expr, taille):
     rendu = formule_png(expr, taille)
     if rendu:
@@ -794,6 +835,239 @@ def resume_en_docx(r: dict) -> bytes:
         _md_dans_docx(doc, s["md"])
     buf = io.BytesIO()
     doc.save(buf)
+    return buf.getvalue()
+
+
+# ---- PDF (reportlab) ---------------------------------------------------------
+_POLICES_PDF = {}
+
+
+def _polices_pdf() -> dict:
+    """Enregistre les polices DejaVu fournies avec matplotlib (accents, symboles mathématiques).
+    Repli sur Helvetica/Courier si elles sont introuvables."""
+    if _POLICES_PDF:
+        return _POLICES_PDF
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    try:
+        import matplotlib
+        dossier = os.path.join(matplotlib.get_data_path(), "fonts", "ttf")
+        fichiers = {"EL": "DejaVuSans.ttf", "EL-B": "DejaVuSans-Bold.ttf",
+                    "EL-I": "DejaVuSans-Oblique.ttf", "EL-BI": "DejaVuSans-BoldOblique.ttf",
+                    "EL-Mono": "DejaVuSansMono.ttf"}
+        for nom, f in fichiers.items():
+            pdfmetrics.registerFont(TTFont(nom, os.path.join(dossier, f)))
+        pdfmetrics.registerFontFamily("EL", normal="EL", bold="EL-B", italic="EL-I", boldItalic="EL-BI")
+        _POLICES_PDF.update(normal="EL", gras="EL-B", mono="EL-Mono")
+    except Exception:
+        _POLICES_PDF.update(normal="Helvetica", gras="Helvetica-Bold", mono="Courier")
+    return _POLICES_PDF
+
+
+def _pdf_texte(t: str) -> str:
+    """Échappe le texte pour reportlab et retire les caractères que la police ne sait pas dessiner (emojis)."""
+    t = re.sub("[\U00010000-\U0010FFFF\ufe0f\u200d\u26a0]", "", t)
+    return html.escape(t, quote=False)
+
+
+def _pdf_formule_tag(expr: str, taille: int, ctx: dict) -> str:
+    """Balise <img> d'une formule pour un paragraphe reportlab (image PNG stockée dans un dossier temporaire)."""
+    cle = (expr, taille)
+    if cle in ctx["images"]:
+        return ctx["images"][cle]
+    rendu = formule_png(expr, taille)
+    if not rendu:
+        tag = f"<i>{_pdf_texte(expr)}</i>"
+    else:
+        data, wpx, hpx = rendu
+        chemin = os.path.join(ctx["dossier"], f"f{len(ctx['images'])}.png")
+        with open(chemin, "wb") as fh:
+            fh.write(data)
+        w, h = wpx / DPI_FORMULE * 72, hpx / DPI_FORMULE * 72
+        tag = f'<img src="{chemin}" width="{w:.1f}" height="{h:.1f}" valign="middle"/>'
+    ctx["images"][cle] = tag
+    return tag
+
+
+def _pdf_inline(texte: str, ctx: dict) -> str:
+    out = []
+    for m in RE_INLINE.split(texte):
+        if not m:
+            continue
+        if m.startswith("$$"):
+            out.append(_pdf_formule_tag(m.strip("$").strip(), 11, ctx))
+        elif m.startswith("$"):
+            out.append(_pdf_formule_tag(m.strip("$").strip(), 11, ctx))
+        elif m.startswith("**") and len(m) > 4:
+            out.append("<b>" + _pdf_inline(m[2:-2], ctx) + "</b>")
+        elif m.startswith("`"):
+            out.append(f'<font name="{_polices_pdf()["mono"]}">{_pdf_texte(m[1:-1])}</font>')
+        elif m.startswith("*") and len(m) > 2:
+            out.append("<i>" + _pdf_inline(m[1:-1], ctx) + "</i>")
+        else:
+            out.append(_pdf_texte(m))
+    return "".join(out)
+
+
+def _pdf_para(texte: str, style, ctx: dict, **kw):
+    """Crée un paragraphe ; en cas de balisage invalide, retombe sur du texte brut."""
+    from reportlab.platypus import Paragraph
+    try:
+        return Paragraph(_pdf_inline(texte, ctx), style, **kw)
+    except Exception:
+        brut = re.sub(r"[$*`]", "", texte)
+        return Paragraph(_pdf_texte(brut), style, **kw)
+
+
+def _pdf_styles() -> dict:
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.styles import ParagraphStyle
+    p = _polices_pdf()
+    encre, accent = colors.HexColor("#1F2937"), colors.HexColor("#4338CA")
+    corps = ParagraphStyle("corps", fontName=p["normal"], fontSize=10, leading=15,
+                           textColor=encre, spaceAfter=5)
+    S = {
+        "corps": corps,
+        "puce": ParagraphStyle("puce", parent=corps, leftIndent=16, bulletIndent=4, spaceAfter=2),
+        "puce2": ParagraphStyle("puce2", parent=corps, leftIndent=32, bulletIndent=20, spaceAfter=2),
+        "cellule": ParagraphStyle("cellule", parent=corps, fontSize=9, leading=12, spaceAfter=0),
+        "cellule_t": ParagraphStyle("cellule_t", parent=corps, fontSize=9, leading=12, spaceAfter=0,
+                                    fontName=p["gras"]),
+        "formule": ParagraphStyle("formule", parent=corps, alignment=TA_CENTER),
+        "code": ParagraphStyle("code", fontName=p["mono"], fontSize=8, leading=10.5,
+                               backColor=colors.HexColor("#F3F4F6"), leftIndent=6, rightIndent=6,
+                               spaceBefore=4, spaceAfter=8),
+        "titre": ParagraphStyle("titre", fontName=p["gras"], fontSize=22, leading=27, alignment=TA_CENTER,
+                                textColor=accent, spaceAfter=6),
+        "sous": ParagraphStyle("sous", parent=corps, alignment=TA_CENTER, textColor=colors.HexColor("#6B7280"),
+                               fontSize=9, spaceAfter=10),
+    }
+    tailles = {1: (16, 21, 16), 2: (13, 18, 12), 3: (11.5, 16, 9), 4: (10.5, 14, 7)}
+    for n, (fs, ld, avant) in tailles.items():
+        S[f"h{n}"] = ParagraphStyle(f"h{n}", fontName=p["gras"], fontSize=fs, leading=ld, spaceBefore=avant,
+                                    spaceAfter=5, keepWithNext=1,
+                                    textColor=accent if n <= 2 else colors.HexColor("#374151"))
+    return S
+
+
+def _md_vers_pdf(md_texte: str, ctx: dict, S: dict, largeur: float) -> list:
+    from reportlab.lib import colors
+    from reportlab.platypus import HRFlowable, Image, Paragraph, Preformatted, Spacer, Table, TableStyle
+    t = re.sub(r"\$\$(.+?)\$\$", lambda m: "$$" + " ".join(m.group(1).split()) + "$$", md_texte, flags=re.S)
+    lignes, i, out = t.splitlines(), 0, []
+    while i < len(lignes):
+        l = lignes[i].rstrip()
+        s = l.strip()
+        if not s:
+            i += 1
+            continue
+        # Bloc de code
+        if s.startswith("```"):
+            i += 1
+            code = []
+            while i < len(lignes) and not lignes[i].strip().startswith("```"):
+                code.append(lignes[i])
+                i += 1
+            i += 1
+            out.append(Preformatted(re.sub("[\U00010000-\U0010FFFF]", "", "\n".join(code)), S["code"]))
+            continue
+        # Tableau
+        if s.startswith("|"):
+            bloc = []
+            while i < len(lignes) and lignes[i].strip().startswith("|"):
+                bloc.append(lignes[i].strip())
+                i += 1
+            rows = [[c.strip() for c in b.strip("|").split("|")] for b in bloc
+                    if not re.match(r"^\|?[\s:\-|]+\|?$", b)]
+            if rows:
+                n = max(len(r) for r in rows)
+                data = []
+                for a, r in enumerate(rows):
+                    r = r + [""] * (n - len(r))
+                    data.append([_pdf_para(c, S["cellule_t"] if a == 0 else S["cellule"], ctx) for c in r])
+                tab = Table(data, colWidths=[largeur / n] * n, repeatRows=1, hAlign="LEFT")
+                tab.setStyle(TableStyle([
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EEF2FF")),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5)]))
+                out += [tab, Spacer(1, 8)]
+            continue
+        # Titres
+        m = re.match(r"^(#{1,6})\s+(.*)", s)
+        if m:
+            niveau = max(1, min(len(m.group(1)) - 1, 4))
+            out.append(_pdf_para(m.group(2).strip(" *"), S[f"h{niveau}"], ctx))
+        # Filet horizontal
+        elif re.match(r"^(-{3,}|\*{3,}|_{3,})$", s):
+            out.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#E5E7EB"),
+                                  spaceBefore=4, spaceAfter=6))
+        # Formule seule sur sa ligne
+        elif s.startswith("$$") and s.endswith("$$") and len(s) > 4:
+            expr = s[2:-2].strip()
+            rendu = formule_png(expr, 13)
+            if rendu:
+                data, wpx, hpx = rendu
+                w, h = wpx / DPI_FORMULE * 72, hpx / DPI_FORMULE * 72
+                if w > largeur:
+                    h, w = h * largeur / w, largeur
+                img = Image(io.BytesIO(data), width=w, height=h)
+                img.hAlign = "CENTER"
+                out += [Spacer(1, 3), img, Spacer(1, 6)]
+            else:
+                out.append(Paragraph(f"<i>{_pdf_texte(expr)}</i>", S["formule"]))
+        # Listes
+        elif re.match(r"^[-*•]\s+", s):
+            indent = len(l) - len(l.lstrip())
+            out.append(_pdf_para(re.sub(r"^[-*•]\s+", "", s), S["puce2" if indent >= 2 else "puce"], ctx,
+                                 bulletText="–" if indent >= 2 else "•"))
+        elif re.match(r"^\d+[.)]\s+", s):
+            num = re.match(r"^(\d+)[.)]\s+", s).group(1)
+            out.append(_pdf_para(re.sub(r"^\d+[.)]\s+", "", s), S["puce"], ctx, bulletText=f"{num}."))
+        else:
+            out.append(_pdf_para(s, S["corps"], ctx))
+        i += 1
+    return out
+
+
+def resume_en_pdf(r: dict) -> bytes:
+    """Génère le résumé au format PDF (A4, formules en images, pagination, un chapitre par page)."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+    from reportlab.platypus import HRFlowable, PageBreak, SimpleDocTemplate, Spacer
+
+    p = _polices_pdf()
+    S = _pdf_styles()
+    marge = 2 * cm
+    largeur = A4[0] - 2 * marge
+    titre_court = r["titre"][:70]
+
+    def pied_page(canvas, doc):
+        canvas.saveState()
+        canvas.setFont(p["normal"], 8)
+        canvas.setFillColor(colors.HexColor("#9CA3AF"))
+        canvas.drawString(marge, 1.1 * cm, f"Étudiants Learn · {titre_court}")
+        canvas.drawRightString(A4[0] - marge, 1.1 * cm, f"Page {doc.page}")
+        canvas.restoreState()
+
+    buf = io.BytesIO()
+    with tempfile.TemporaryDirectory() as dossier:
+        ctx = {"dossier": dossier, "images": {}}
+        doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=marge, rightMargin=marge,
+                                topMargin=marge, bottomMargin=1.8 * cm,
+                                title=r["titre"], author=AUTEUR, subject="Fiche de révision")
+        story = [_pdf_para(r["titre"], S["titre"], ctx),
+                 _pdf_para(f"Fiche de révision ({r.get('niveau', '')}) · {r.get('cree', '')}", S["sous"], ctx),
+                 HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#4338CA"), spaceAfter=10)]
+        story += _md_vers_pdf(r["apercu"], ctx, S, largeur)
+        for s in r["sections"]:
+            story += [PageBreak(), _pdf_para(s["titre"], S["h1"], ctx),
+                      HRFlowable(width="100%", thickness=0.6, color=colors.HexColor("#E5E7EB"), spaceAfter=6)]
+            story += _md_vers_pdf(s["md"], ctx, S, largeur)
+        doc.build(story, onFirstPage=pied_page, onLaterPages=pied_page)
     return buf.getvalue()
 
 
@@ -960,11 +1234,9 @@ def pied():
         f'''<div class="barre-pied">
         <b>Étudiants Learn</b> · Conçu par {AUTEUR}<span class="sep">|</span>
         <a href="mailto:{EMAIL}">{EMAIL}</a><span class="sep">|</span>
-        <a href="tel:{TEL_AMB[1]}">{TEL_AMB[0]}</a> · <a href="tel:{TEL_REP[1]}">{TEL_REP[0]}</a>
-        <span class="sec">Répétitions : <a href="tel:{TEL_REP[1]}">{TEL_REP[0]}</a>
-        <span class="sep">|</span>Démarches en ligne (nationalité, passeport, casier judiciaire) et traitement de données :
-        <a href="tel:{TEL_REP[1]}">{TEL_REP[0]}</a> ou <a href="tel:{TEL_AMB[1]}">{TEL_AMB[0]}</a></span>
-        </div>''', unsafe_allow_html=True)
+        <a href="tel:{TEL_AMB[1]}">{TEL_AMB[0]}</a><span class="sep">|</span>
+        Répétitions : <a href="tel:{TEL_REP[1]}">{TEL_REP[0]}</a></div>''',
+        unsafe_allow_html=True)
 
 
 def boutons_contact(numero, message="Bonjour, je vous contacte depuis Étudiants Learn."):
@@ -974,36 +1246,66 @@ def boutons_contact(numero, message="Bonjour, je vous contacte depuis Étudiants
             f'WhatsApp</a>')
 
 
+ICONES = {
+    "livre": '<svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>',
+    "dossier": '<svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14l2 2 4-4"/></svg>',
+    "graphique": '<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+}
+
+SERVICES = [
+    {"icone": "livre", "tag": "Accompagnement", "titre": "Répétitions",
+     "texte": "Un suivi sur mesure pour progresser et aborder vos examens avec confiance.",
+     "points": ["Soutien scolaire et universitaire", "Préparation aux examens et concours",
+                "Méthodes de travail et organisation"],
+     "contact": [TEL_REP[0]]},
+    {"icone": "dossier", "tag": "Administratif", "titre": "Démarches en ligne",
+     "texte": "Nous vous guidons dans vos demandes administratives, de la préparation du dossier à son dépôt.",
+     "points": ["Certificat de nationalité", "Passeport", "Casier judiciaire"],
+     "contact": [TEL_REP[0], TEL_AMB[0]]},
+    {"icone": "graphique", "tag": "Données", "titre": "Traitement de données",
+     "texte": "Des données propres, exploitables et clairement présentées.",
+     "points": ["Saisie et nettoyage", "Analyse et calculs", "Tableaux, graphiques et mise en forme"],
+     "contact": [TEL_REP[0], TEL_AMB[0]]},
+]
+
+
 def bloc_services():
-    st.markdown(
-        f'''<div class="cartes">
-        <div class="carte"><div class="tag">Accompagnement</div><h4>Répétitions</h4>
-        <p>Un accompagnement personnalisé pour réviser et préparer vos examens. Contact : <b>{TEL_REP[0]}</b>.</p></div>
-        <div class="carte"><div class="tag">Administratif</div><h4>Démarches en ligne</h4>
-        <p>Aide pour vos demandes en ligne : nationalité, passeport, casier judiciaire.</p></div>
-        <div class="carte"><div class="tag">Données</div><h4>Traitement de données</h4>
-        <p>Saisie, nettoyage, analyse et mise en forme de vos données.<br>
-        <b>{TEL_REP[0]}</b> ou <b>{TEL_AMB[0]}</b></p></div></div>''', unsafe_allow_html=True)
+    cartes = ""
+    for s in SERVICES:
+        pts = "".join(f"<li>{p}</li>" for p in s["points"])
+        tels = " · ".join(s["contact"])
+        cartes += (f'<div class="service"><div class="ico">{ICONES[s["icone"]]}</div>'
+                   f'<div class="tag" style="font-size:.68rem;font-weight:700;letter-spacing:.08em;'
+                   f'text-transform:uppercase;color:var(--accent);margin-bottom:.2rem">{s["tag"]}</div>'
+                   f'<h4>{s["titre"]}</h4><p>{s["texte"]}</p><ul>{pts}</ul>'
+                   f'<div class="contact">Contact : <b>{tels}</b></div></div>')
+    st.markdown(f'<div class="services">{cartes}</div>', unsafe_allow_html=True)
 
 
 def page_services():
-    entete("Services & contact", "Au-delà de l'application, nous vous accompagnons concrètement.")
+    entete("Services & contact",
+           "Au-delà de l'application, nous vous accompagnons concrètement dans vos études et vos démarches.")
     bloc_services()
-    st.subheader("Répétitions")
-    st.write("Pour des besoins de répétition (soutien scolaire, préparation d'examens, méthodes de travail), "
-             "vous pouvez contacter le **" + TEL_REP[0] + "**.")
+
+    st.markdown('<div class="section-titre">Comment ça se passe</div>', unsafe_allow_html=True)
+    st.markdown(
+        '''<div class="parcours">
+        <div><b>1. Vous nous contactez</b><span>Par appel, WhatsApp ou e-mail, en décrivant votre besoin.</span></div>
+        <div><b>2. Nous cadrons la demande</b><span>Nous précisons ensemble les pièces, le délai et les modalités.</span></div>
+        <div><b>3. Nous vous accompagnons</b><span>Nous réalisons la mission et restons disponibles jusqu'à son terme.</span></div>
+        </div>''', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-titre">Nous contacter</div>', unsafe_allow_html=True)
+    st.markdown("**Répétitions**")
     st.markdown(boutons_contact(TEL_REP, "Bonjour, je souhaite des informations sur les répétitions."),
                 unsafe_allow_html=True)
-    st.subheader("Demandes en ligne & traitement de données")
-    st.write("Nous vous accompagnons dans vos demandes en ligne (**nationalité, passeport, casier judiciaire**) "
-             "ainsi que dans le **traitement de vos données**.")
-    st.markdown(boutons_contact(TEL_REP, "Bonjour, je souhaite être accompagné(e) pour une démarche en ligne.")
-                + boutons_contact(TEL_AMB, "Bonjour, je souhaite être accompagné(e) pour une démarche en ligne."),
-                unsafe_allow_html=True)
-    st.caption("Service d'accompagnement privé, non affilié à l'administration. "
-               "Les délais et décisions dépendent des services officiels.")
-    st.subheader("Nous écrire")
+    st.markdown("**Démarches en ligne et traitement de données**")
+    msg = "Bonjour, je souhaite être accompagné(e) pour une démarche ou un traitement de données."
+    st.markdown(boutons_contact(TEL_REP, msg) + boutons_contact(TEL_AMB, msg), unsafe_allow_html=True)
+    st.markdown("**Par e-mail**")
     st.markdown(f'<a class="btn clair" href="mailto:{EMAIL}">{EMAIL}</a>', unsafe_allow_html=True)
+    st.caption("Service d'accompagnement privé, non affilié à l'administration. "
+               "Les délais et les décisions relèvent des services officiels.")
 
 
 def etapes():
@@ -1048,7 +1350,7 @@ def page_connexion():
             <ul class="atouts">
               <li><i class="pt"></i><div><b>Résumés approfondis</b>
                 <span>Une fiche par chapitre : définitions, formules, démonstrations et exemples.
-                Export Word, PDF et Markdown.</span></div></li>
+                Export PDF, Word et Markdown.</span></div></li>
               <li><i class="pt"></i><div><b>QCM jusqu'à 100 questions</b>
                 <span>Sur tout le cours ou par chapitre, avec correction détaillée et note sur 20.</span></div></li>
               <li><i class="pt"></i><div><b>Assistant pédagogique</b>
@@ -1155,20 +1457,42 @@ def afficher_resume(r: dict, cle_export: str):
     st.header(r["titre"])
     st.caption(f"Niveau : {r.get('niveau', '')} · généré le {r.get('cree', '')}")
     md = resume_en_markdown(r)
-    c1, c2, c3 = st.columns(3)
-    c1.download_button("Télécharger en HTML (pour PDF)", md_vers_html(md, r["titre"]).encode("utf-8"),
+
+    # Exports lourds (PDF, Word) : générés à la demande, puis proposés au téléchargement
+    cp, cw = st.columns(2)
+    with cp:
+        prete = st.session_state.get("pdf")
+        if prete and prete[0] == cle_export:
+            st.download_button("Télécharger le PDF", prete[1], file_name=f"{slug(r['titre'])}.pdf",
+                               mime="application/pdf", type="primary", use_container_width=True,
+                               key=f"dpdf{cle_export}")
+        elif st.button("Préparer le PDF", type="primary", use_container_width=True, key=f"ppdf{cle_export}"):
+            try:
+                with st.spinner("Création du PDF (rendu des formules)…"):
+                    st.session_state.pdf = (cle_export, resume_en_pdf(r))
+                st.rerun()
+            except Exception as e:
+                st.error(f"Impossible de créer le PDF : {e}")
+    with cw:
+        prete = st.session_state.get("docx")
+        if prete and prete[0] == cle_export:
+            st.download_button("Télécharger le fichier Word", prete[1], file_name=f"{slug(r['titre'])}.docx",
+                               mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                               use_container_width=True, key=f"dw{cle_export}")
+        elif st.button("Préparer le fichier Word", use_container_width=True, key=f"pw{cle_export}"):
+            try:
+                with st.spinner("Création du document Word (rendu des formules)…"):
+                    st.session_state.docx = (cle_export, resume_en_docx(r))
+                st.rerun()
+            except Exception as e:
+                st.error(f"Impossible de créer le document Word : {e}")
+
+    c3, c4 = st.columns(2)
+    c3.download_button("Télécharger en HTML", md_vers_html(md, r["titre"]).encode("utf-8"),
                        file_name=f"{slug(r['titre'])}.html", mime="text/html", use_container_width=True,
-                       help="Ouvre le fichier puis Ctrl+P → Enregistrer en PDF (formules incluses).")
-    c2.download_button("Télécharger en Markdown", md.encode("utf-8"), file_name=f"{slug(r['titre'])}.md",
+                       help="Version web avec formules MathJax.")
+    c4.download_button("Télécharger en Markdown", md.encode("utf-8"), file_name=f"{slug(r['titre'])}.md",
                        mime="text/markdown", use_container_width=True)
-    if c3.button("Préparer le fichier Word", use_container_width=True, key=f"pw{cle_export}"):
-        with st.spinner("Création du document Word (rendu des formules)…"):
-            st.session_state.docx = (cle_export, resume_en_docx(r))
-    prete = st.session_state.get("docx")
-    if prete and prete[0] == cle_export:
-        st.download_button("Télécharger le fichier Word", prete[1], file_name=f"{slug(r['titre'])}.docx",
-                           mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                           type="primary", use_container_width=True)
     st.divider()
     st.markdown(r["apercu"])
     st.divider()
@@ -1462,10 +1786,11 @@ with st.sidebar:
             f'<b>{html.escape(st.session_state.cours["nom"])}</b></div>', unsafe_allow_html=True)
     cle = cle_api()
     st.markdown(
-        f'''<div class="promo"><b>Besoin d'aide ?</b><br>
+        f'''<div class="promo"><b>Besoin d'un coup de main ?</b><br>
         Répétitions : {TEL_REP[0]}<br>
-        Démarches en ligne (nationalité, passeport, casier judiciaire) et traitement de données :
-        {TEL_REP[0]} / {TEL_AMB[0]}</div>''', unsafe_allow_html=True)
+        Démarches et données : {TEL_AMB[0]}<br>
+        <span style="font-size:.72rem">Détails dans l'onglet « Services & contact ».</span></div>''',
+        unsafe_allow_html=True)
     st.write("")
     if st.button("Se déconnecter", use_container_width=True):
         for k in list(st.session_state.keys()):
