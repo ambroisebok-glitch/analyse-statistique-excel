@@ -34,7 +34,7 @@ from pypdf import PdfReader
 # Modèle préféré (modifiable sans toucher au code via la variable GEMINI_MODEL / secrets Streamlit)
 MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 MAX_CHARS = 700_000                 # le cours est lu en entier (≈ 175 000 tokens)
-MAX_PDF_OCTETS = 18 * 1024 * 1024   # taille max d'un PDF envoyé directement à Gemini
+MAX_PDF_OCTETS = 10 * 1024 * 1024   # taille max d'un PDF envoyé directement à Gemini
 LOT_QCM = 20                        # questions générées par appel
 MAX_QCM = 100
 LETTRES = "ABCD"
@@ -63,10 +63,9 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root { --ink:#0F172A; --muted:#64748B; --line:#E2E8F0; --bg:#F8FAFC;
         --accent:#4338CA; --accent-d:#3730A3; --accent-l:#EEF2FF; }
-.stApp { font-family:'Inter',sans-serif; color:var(--ink);
+.stApp { font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:var(--ink);
   background-color:#F6F7FB;
   background-image:
     radial-gradient(900px 520px at 6% -8%, rgba(67,56,202,.10), transparent 65%),
@@ -74,13 +73,12 @@ st.markdown(
     url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cg font-family='Georgia,serif' fill='%234338CA' fill-opacity='.075'%3E%3Ctext x='28' y='70' font-size='34'%3E∑%3C/text%3E%3Ctext x='170' y='52' font-size='22' font-style='italic'%3Ef(x) = ∫ g(t)dt%3C/text%3E%3Ctext x='300' y='130' font-size='38'%3Eπ%3C/text%3E%3Ctext x='60' y='190' font-size='24' font-style='italic'%3E√(a²+b²)%3C/text%3E%3Ctext x='250' y='230' font-size='30'%3EΔ%3C/text%3E%3Ctext x='30' y='320' font-size='22' font-style='italic'%3Ee^(iπ) + 1 = 0%3C/text%3E%3Ctext x='230' y='350' font-size='34'%3E∞%3C/text%3E%3Ctext x='340' y='300' font-size='26'%3Eα β%3C/text%3E%3C/g%3E%3C/svg%3E"),
     linear-gradient(rgba(67,56,202,.045) 1px, transparent 1px),
     linear-gradient(90deg, rgba(67,56,202,.045) 1px, transparent 1px);
-  background-size:auto, auto, 420px 420px, 32px 32px, 32px 32px;
-  background-attachment:fixed; }
+  background-size:auto, auto, 420px 420px, 32px 32px, 32px 32px; }
 #MainMenu, footer { visibility:hidden; }
 header[data-testid="stHeader"] { background:transparent; }
 iframe[height="0"] { display:none; }
 .block-container { padding-top:2rem; padding-bottom:6.5rem; max-width:1080px;
-  background:rgba(255,255,255,.80); backdrop-filter:blur(6px);
+  background:rgba(255,255,255,.92);
   border:1px solid var(--line); border-radius:20px; margin-top:1rem;
   box-shadow:0 10px 40px rgba(15,23,42,.05); }
 
@@ -277,9 +275,8 @@ def maintenant() -> str:
 
 
 def sql(requete, params=(), fetch=None):
-    """Exécute une requête SQLite après s'être assuré que le schéma existe."""
-    init_db()
-    c = sqlite3.connect(DB_PATH, timeout=30)
+    init_db()  # no-op après le premier appel (mis en cache)
+    c = sqlite3.connect(DB_PATH, timeout=10)
     c.row_factory = sqlite3.Row
     try:
         cur = c.execute(requete, params)
@@ -294,87 +291,48 @@ def sql(requete, params=(), fetch=None):
         c.close()
 
 
-def init_db():
-    """Crée les tables manquantes dans la base SQLite utilisée par l'application."""
-    dossier_db = os.path.dirname(DB_PATH)
+@st.cache_resource(show_spinner=False)
+def _creer_base(chemin: str) -> bool:
+    dossier_db = os.path.dirname(chemin)
     if dossier_db:
         os.makedirs(dossier_db, exist_ok=True)
-
-    c = sqlite3.connect(DB_PATH, timeout=30)
+    c = sqlite3.connect(chemin, timeout=10)
     try:
+        try:
+            c.execute("PRAGMA journal_mode=WAL")  # lectures/écritures simultanées sans blocage
+        except sqlite3.DatabaseError:
+            pass
         c.executescript(
             """
             CREATE TABLE IF NOT EXISTS users(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT UNIQUE,
-                nom TEXT,
-                sel TEXT,
-                hash TEXT,
-                cree TEXT
-            );
+                id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, nom TEXT,
+                sel TEXT, hash TEXT, cree TEXT);
             CREATE TABLE IF NOT EXISTS cours(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                nom TEXT,
-                texte TEXT,
-                pdf BLOB,
-                chapitres TEXT,
-                cree TEXT
-            );
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, nom TEXT,
+                texte TEXT, pdf BLOB, chapitres TEXT, cree TEXT);
             CREATE TABLE IF NOT EXISTS resumes(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                cours_id INTEGER,
-                titre TEXT,
-                contenu TEXT,
-                cree TEXT
-            );
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cours_id INTEGER,
+                titre TEXT, contenu TEXT, cree TEXT);
             CREATE TABLE IF NOT EXISTS qcms(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                cours_id INTEGER,
-                titre TEXT,
-                data TEXT,
-                cree TEXT
-            );
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cours_id INTEGER,
+                titre TEXT, data TEXT, cree TEXT);
             CREATE TABLE IF NOT EXISTS tentatives(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                qcm_id INTEGER,
-                score INTEGER,
-                total INTEGER,
-                cree TEXT
-            );
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, qcm_id INTEGER,
+                score INTEGER, total INTEGER, cree TEXT);
             CREATE TABLE IF NOT EXISTS chats(
-                cours_id INTEGER,
-                user_id INTEGER,
-                messages TEXT,
-                PRIMARY KEY(cours_id, user_id)
-            );
+                cours_id INTEGER, user_id INTEGER, messages TEXT,
+                PRIMARY KEY(cours_id, user_id));
             """
         )
         c.commit()
-
-        # Vérification immédiate : évite de continuer avec une base incomplète.
-        tables = {
-            row[0]
-            for row in c.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
-        }
-        tables_requises = {
-            "users", "cours", "resumes", "qcms", "tentatives", "chats"
-        }
-        manquantes = tables_requises - tables
-        if manquantes:
-            raise RuntimeError(
-                "Tables SQLite manquantes après initialisation : "
-                + ", ".join(sorted(manquantes))
-            )
     finally:
         c.close()
-
     return True
+
+
+def init_db():
+    """Crée les tables une seule fois par démarrage du serveur."""
+    return _creer_base(DB_PATH)
 
 
 def hacher(mdp: str, sel: str) -> str:
@@ -498,7 +456,7 @@ def modeles_disponibles(cle: str) -> list:
 
     trouves.sort(key=tri, reverse=True)
     noms = [MODEL] + [n for n in trouves if n != MODEL]
-    return noms[:8]
+    return noms[:4]
 
 
 def _temporaire(msg: str) -> bool:
@@ -533,7 +491,7 @@ def generer(contenu, cle: str, system=None, max_tokens=16000, temperature=0.4,
 
     derniere = None
     for modele in modeles_disponibles(cle):
-        for essai in range(3):
+        for essai in range(2):
             try:
                 rep = client.models.generate_content(model=modele, contents=contenu, config=config())
                 if rep.text and rep.text.strip():
@@ -1446,8 +1404,6 @@ def page_connexion():
                     else:
                         st.session_state.user = u
                         st.rerun()
-    st.markdown('<div class="section-titre">Nos services</div>', unsafe_allow_html=True)
-    bloc_services()
     pied()
 
 
@@ -1513,6 +1469,11 @@ def page_cours(cle):
                     st.rerun()
 
 
+@st.cache_data(show_spinner=False, max_entries=6)
+def html_export(md: str, titre: str) -> bytes:
+    return md_vers_html(md, titre).encode("utf-8")
+
+
 def afficher_resume(r: dict, cle_export: str):
     st.header(r["titre"])
     st.caption(f"Niveau : {r.get('niveau', '')} · généré le {r.get('cree', '')}")
@@ -1548,7 +1509,7 @@ def afficher_resume(r: dict, cle_export: str):
                 st.error(f"Impossible de créer le document Word : {e}")
 
     c3, c4 = st.columns(2)
-    c3.download_button("Télécharger en HTML", md_vers_html(md, r["titre"]).encode("utf-8"),
+    c3.download_button("Télécharger en HTML", html_export(md, r["titre"]),
                        file_name=f"{slug(r['titre'])}.html", mime="text/html", use_container_width=True,
                        help="Version web avec formules MathJax.")
     c4.download_button("Télécharger en Markdown", md.encode("utf-8"), file_name=f"{slug(r['titre'])}.md",
@@ -1557,9 +1518,9 @@ def afficher_resume(r: dict, cle_export: str):
     st.markdown(r["apercu"])
     st.divider()
     st.subheader("Fiches par chapitre")
-    for i, s in enumerate(r["sections"]):
-        with st.expander(f"{i + 1}. {s['titre']}", expanded=(i == 0 and len(r["sections"]) == 1)):
-            st.markdown(s["md"])
+    noms = [f"{i + 1}. {sec['titre']}" for i, sec in enumerate(r["sections"])]
+    choix_chap = st.selectbox("Chapitre à afficher", noms, key=f"vue_{cle_export}")
+    st.markdown(r["sections"][noms.index(choix_chap)]["md"])
 
 
 def page_resume(cle):
