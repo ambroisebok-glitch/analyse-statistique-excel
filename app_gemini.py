@@ -28,6 +28,8 @@ from google import genai
 from google.genai import types
 from pypdf import PdfReader
 
+from style import ILLUSTRATION, appliquer_style
+
 # ----------------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------------
@@ -55,164 +57,7 @@ st.set_page_config(
     page_title=SEO_TITRE, page_icon="🎓", layout="wide", initial_sidebar_state="expanded",
     menu_items={"About": f"**Étudiants Learn** — conçu par {AUTEUR} · {EMAIL} · {TEL_AMB[0]}"})
 
-st.markdown(
-    """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-:root { --ink:#0F172A; --muted:#64748B; --line:#E2E8F0; --bg:#F8FAFC;
-        --accent:#4338CA; --accent-d:#3730A3; --accent-l:#EEF2FF; }
-.stApp { font-family:'Inter',sans-serif; color:var(--ink);
-  background-color:#F6F7FB;
-  background-image:
-    radial-gradient(900px 520px at 6% -8%, rgba(67,56,202,.10), transparent 65%),
-    radial-gradient(800px 500px at 100% 8%, rgba(14,165,233,.07), transparent 65%),
-    url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cg font-family='Georgia,serif' fill='%234338CA' fill-opacity='.075'%3E%3Ctext x='28' y='70' font-size='34'%3E∑%3C/text%3E%3Ctext x='170' y='52' font-size='22' font-style='italic'%3Ef(x) = ∫ g(t)dt%3C/text%3E%3Ctext x='300' y='130' font-size='38'%3Eπ%3C/text%3E%3Ctext x='60' y='190' font-size='24' font-style='italic'%3E√(a²+b²)%3C/text%3E%3Ctext x='250' y='230' font-size='30'%3EΔ%3C/text%3E%3Ctext x='30' y='320' font-size='22' font-style='italic'%3Ee^(iπ) + 1 = 0%3C/text%3E%3Ctext x='230' y='350' font-size='34'%3E∞%3C/text%3E%3Ctext x='340' y='300' font-size='26'%3Eα β%3C/text%3E%3C/g%3E%3C/svg%3E"),
-    linear-gradient(rgba(67,56,202,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(67,56,202,.045) 1px, transparent 1px);
-  background-size:auto, auto, 420px 420px, 32px 32px, 32px 32px;
-  background-attachment:fixed; }
-#MainMenu, footer { visibility:hidden; }
-header[data-testid="stHeader"] { background:transparent; }
-iframe[height="0"] { display:none; }
-.block-container { padding-top:2rem; padding-bottom:6.5rem; max-width:1080px;
-  background:rgba(255,255,255,.80); backdrop-filter:blur(6px);
-  border:1px solid var(--line); border-radius:20px; margin-top:1rem;
-  box-shadow:0 10px 40px rgba(15,23,42,.05); }
-
-/* Barre latérale */
-[data-testid="stSidebar"] { background:#FFFFFF; border-right:1px solid var(--line); }
-.marque { display:flex; align-items:center; gap:.7rem; margin:.2rem 0 1rem 0; }
-.marque .logo { width:36px; height:36px; border-radius:10px; background:var(--accent); color:#fff;
-  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.95rem;
-  letter-spacing:.02em; }
-.marque b { font-size:1.12rem; font-weight:700; color:var(--ink); letter-spacing:-.01em; }
-.profil { display:flex; align-items:center; gap:.7rem; padding:.65rem .8rem; border:1px solid var(--line);
-  border-radius:12px; background:var(--bg); margin-bottom:1rem; }
-.profil .av { flex:0 0 34px; height:34px; border-radius:50%; background:var(--accent-l); color:var(--accent);
-  font-weight:700; display:flex; align-items:center; justify-content:center; }
-.profil .n { font-weight:600; font-size:.88rem; line-height:1.25; }
-.profil .e { font-size:.74rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis;
-  white-space:nowrap; max-width:150px; }
-[data-testid="stSidebar"] [role="radiogroup"] { gap:.15rem; }
-[data-testid="stSidebar"] [role="radiogroup"] label { padding:.55rem .8rem; border-radius:10px;
-  width:100%; transition:background .15s; }
-[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child { display:none; }
-[data-testid="stSidebar"] [role="radiogroup"] label:hover { background:#F1F5F9; }
-[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) { background:var(--accent-l); }
-[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p { color:var(--accent); font-weight:600; }
-.cours-actif { border:1px solid var(--line); border-radius:12px; padding:.65rem .8rem; background:#fff;
-  margin-bottom:.8rem; }
-.cours-actif span { display:block; font-size:.68rem; font-weight:700; letter-spacing:.08em;
-  color:var(--muted); margin-bottom:.15rem; }
-.cours-actif b { font-size:.85rem; font-weight:600; word-break:break-word; }
-.promo { border-top:1px solid var(--line); padding-top:.8rem; font-size:.78rem; color:var(--muted);
-  line-height:1.55; }
-.promo b { color:var(--ink); }
-
-/* En-tête de page et étapes */
-.entete { margin:0 0 1.4rem 0; padding-bottom:1rem; border-bottom:1px solid var(--line); }
-.entete h1 { font-size:1.65rem; font-weight:700; margin:0; padding:0; color:var(--ink);
-  letter-spacing:-.02em; }
-.entete p { margin:.35rem 0 0 0; color:var(--muted); font-size:.98rem; max-width:760px; }
-.etapes { display:flex; flex-wrap:wrap; gap:.5rem; margin:0 0 1.4rem 0; }
-.etape { display:inline-flex; align-items:center; gap:.5rem; padding:.3rem .85rem .3rem .35rem;
-  border:1px solid var(--line); border-radius:999px; background:#fff; font-size:.82rem;
-  font-weight:500; color:var(--muted); }
-.etape i { font-style:normal; width:22px; height:22px; border-radius:50%; background:#F1F5F9;
-  display:inline-flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; }
-.etape.ok { color:#065F46; border-color:#A7F3D0; background:#F0FDF4; }
-.etape.ok i { background:#10B981; color:#fff; }
-
-/* Cartes */
-.cartes { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem;
-  margin:.5rem 0 1.5rem 0; }
-.carte { border:1px solid var(--line); border-radius:14px; padding:1.1rem 1.2rem; background:#fff; }
-.carte .tag { font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-  color:var(--accent); margin-bottom:.45rem; }
-.carte h4 { margin:0 0 .35rem 0; font-size:1rem; font-weight:600; color:var(--ink); }
-.carte p { margin:0; color:#475569; font-size:.88rem; line-height:1.55; }
-.section-titre { font-size:1.05rem; font-weight:700; margin:1.8rem 0 .4rem 0; color:var(--ink); }
-
-/* Page de connexion */
-.marque-lg { display:flex; align-items:center; gap:.75rem; }
-.marque-lg .logo { width:42px; height:42px; border-radius:12px; background:var(--accent); color:#fff;
-  display:flex; align-items:center; justify-content:center; font-weight:800; letter-spacing:.02em; }
-.marque-lg b { font-size:1.25rem; font-weight:700; letter-spacing:-.01em; }
-.titre-accueil { font-size:2.3rem; font-weight:800; line-height:1.15; letter-spacing:-.03em;
-  margin:1.6rem 0 .8rem 0; color:var(--ink); }
-.sous-accueil { color:#475569; font-size:1.02rem; line-height:1.6; max-width:520px; margin:0; }
-.atouts { list-style:none; padding:0; margin:1.6rem 0 0 0; display:grid; gap:1rem; }
-.atouts li { display:flex; gap:.85rem; align-items:flex-start; }
-.atouts .pt { flex:0 0 8px; height:8px; border-radius:50%; background:var(--accent); margin-top:.5rem; }
-.atouts b { display:block; font-size:.95rem; font-weight:600; }
-.atouts span { color:#475569; font-size:.88rem; line-height:1.5; }
-.acces-titre { font-size:1.25rem; font-weight:700; margin:.2rem 0 .2rem 0; }
-.acces-sous { color:var(--muted); font-size:.9rem; margin-bottom:.8rem; }
-
-/* Boutons et composants Streamlit */
-.btn { display:inline-block; padding:.55rem 1rem; border-radius:10px; font-weight:600; font-size:.88rem;
-  text-decoration:none !important; background:var(--accent); color:#fff !important;
-  margin:.25rem .4rem .25rem 0; }
-.btn:hover { background:var(--accent-d); }
-.btn.wa { background:#15803D; } .btn.wa:hover { background:#166534; }
-.btn.clair { background:var(--accent-l); color:var(--accent) !important; }
-.stButton>button, .stDownloadButton>button { border-radius:10px; font-weight:600;
-  border:1px solid var(--line); transition:all .15s; }
-.stButton>button:hover, .stDownloadButton>button:hover { border-color:var(--accent); color:var(--accent); }
-.stButton>button[kind="primary"], .stDownloadButton>button[kind="primary"],
-button[data-testid="stBaseButton-primary"], button[data-testid="stBaseButton-primaryFormSubmit"] {
-  background:var(--accent); border:1px solid var(--accent); color:#fff; }
-.stButton>button[kind="primary"]:hover, .stDownloadButton>button[kind="primary"]:hover,
-button[data-testid="stBaseButton-primary"]:hover, button[data-testid="stBaseButton-primaryFormSubmit"]:hover {
-  background:var(--accent-d); border-color:var(--accent-d); color:#fff; }
-div[data-testid="stMetric"] { background:#fff; border:1px solid var(--line); border-radius:12px;
-  padding:.9rem 1.1rem; }
-div[data-testid="stExpander"] { border:1px solid var(--line); border-radius:12px; background:#fff; }
-div[data-testid="stForm"] { border:1px solid var(--line); border-radius:14px; background:#fff; }
-[data-testid="stFileUploaderDropzone"] { border:1.5px dashed #CBD5E1; background:#fff; border-radius:12px; }
-[data-testid="stChatMessage"] { background:#fff; border:1px solid var(--line); border-radius:12px; }
-[data-testid="stVerticalBlockBorderWrapper"] { border-radius:12px; }
-
-/* Services */
-.services { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.1rem;
-  margin:.6rem 0 1.6rem 0; }
-.service { background:#fff; border:1px solid var(--line); border-radius:16px; padding:1.3rem 1.3rem 1.1rem;
-  display:flex; flex-direction:column; transition:box-shadow .2s, transform .2s, border-color .2s; }
-.service:hover { box-shadow:0 12px 30px rgba(67,56,202,.10); transform:translateY(-2px);
-  border-color:#C7D2FE; }
-.service .ico { width:44px; height:44px; border-radius:12px; background:var(--accent-l);
-  color:var(--accent); display:flex; align-items:center; justify-content:center; margin-bottom:.9rem; }
-.service .ico svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8;
-  stroke-linecap:round; stroke-linejoin:round; }
-.service h4 { margin:0 0 .35rem 0; font-size:1.05rem; font-weight:700; color:var(--ink); }
-.service > p { margin:0 0 .8rem 0; color:#475569; font-size:.88rem; line-height:1.6; }
-.service ul { margin:0 0 1rem 0; padding:0; list-style:none; display:grid; gap:.35rem; }
-.service li { font-size:.85rem; color:#334155; padding-left:1.15rem; position:relative; }
-.service li::before { content:""; position:absolute; left:0; top:.5em; width:6px; height:6px;
-  border-radius:50%; background:var(--accent); }
-.service .contact { margin-top:auto; padding-top:.8rem; border-top:1px solid var(--line);
-  font-size:.8rem; color:var(--muted); }
-.service .contact b { color:var(--ink); }
-.parcours { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem;
-  margin:.5rem 0 1.5rem 0; }
-.parcours div { border-left:3px solid var(--accent); padding:.2rem 0 .2rem .9rem; }
-.parcours b { display:block; font-size:.92rem; }
-.parcours span { font-size:.84rem; color:#475569; line-height:1.5; }
-
-/* Barre d'information en bas */
-.barre-pied { position:fixed; left:0; right:0; bottom:0; z-index:99; background:#0F172A; color:#94A3B8;
-  padding:.55rem 1rem; text-align:center; font-size:.78rem; line-height:1.5; }
-.barre-pied a { color:#E2E8F0 !important; text-decoration:none; font-weight:500; }
-.barre-pied a:hover { text-decoration:underline; }
-.barre-pied b { color:#F8FAFC; font-weight:600; }
-.barre-pied .sep { opacity:.35; margin:0 .6rem; }
-.barre-pied .sec { display:block; font-size:.72rem; margin-top:.1rem; }
-@media (max-width: 640px) {
-  .barre-pied { font-size:.7rem; } .entete h1 { font-size:1.35rem; } .titre-accueil { font-size:1.7rem; } }
-</style>
-""",
-    unsafe_allow_html=True,
-)
+appliquer_style()
 
 
 def injecter_seo():
@@ -452,6 +297,13 @@ def parts_cours(cours: dict) -> list:
     return [types.Part.from_text(text="COURS :\n" + cours["texte"][:MAX_CHARS])]
 
 
+def parts_chat(cours: dict, visuel: bool) -> list:
+    """Contexte du chat : le texte extrait est bien plus léger qu'un PDF envoyé à chaque question."""
+    if visuel or len(cours["texte"]) < 500:
+        return parts_cours(cours)
+    return [types.Part.from_text(text="COURS :\n" + cours["texte"][:MAX_CHARS])]
+
+
 def requete(cours: dict, prompt: str) -> list:
     return [types.Content(role="user",
                           parts=parts_cours(cours) + [types.Part.from_text(text=prompt)])]
@@ -503,30 +355,36 @@ def generer(contenu, cle: str, system=None, max_tokens=16000, temperature=0.4,
 
 
 def flux_chat(contenu, cle: str, system: str):
-    """Génère la réponse en streaming (avec repli sur d'autres modèles)."""
+    """Réponse en streaming. La « réflexion » du modèle est coupée (premiers mots bien plus vite) ;
+    si le modèle la refuse, on la réactive. Repli automatique sur d'autres modèles."""
     client = genai.Client(api_key=cle)
-    cfg = types.GenerateContentConfig(system_instruction=system, temperature=0.5,
-                                      max_output_tokens=16000)
     derniere = None
     for modele in modeles_disponibles(cle):
-        deja = False
-        try:
-            for morceau in client.models.generate_content_stream(
-                    model=modele, contents=contenu, config=cfg):
-                if morceau.text:
-                    deja = True
-                    yield morceau.text
-            return
-        except Exception as e:
-            derniere = e
-            if deja:
+        for _ in range(2):
+            kw = dict(system_instruction=system, temperature=0.5,
+                      max_output_tokens=REGLAGES["max_tokens"] or 8192)
+            if REGLAGES["sans_reflexion"]:
+                kw["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+            deja = False
+            try:
+                for morceau in client.models.generate_content_stream(
+                        model=modele, contents=contenu, config=types.GenerateContentConfig(**kw)):
+                    if morceau.text:
+                        deja = True
+                        yield morceau.text
+                return
+            except Exception as e:
+                derniere = e
+                if deja:
+                    raise
+                msg = str(e)
+                if ("400" in msg or "INVALID_ARGUMENT" in msg) and REGLAGES["sans_reflexion"]:
+                    REGLAGES["sans_reflexion"] = False   # réglage refusé : on réessaie sans
+                    continue
+                if "404" in msg or "NOT_FOUND" in msg or _temporaire(msg):
+                    break                                # modèle indisponible : on passe au suivant
                 raise
-            msg = str(e)
-            if "404" in msg or "NOT_FOUND" in msg or _temporaire(msg):
-                time.sleep(2)
-                continue
-            raise
-    raise RuntimeError(f"Gemini est indisponible pour le moment. ({derniere})")
+    raise RuntimeError(f"L'assistant est indisponible pour le moment. Réessaie dans un instant. ({derniere})")
 
 
 def normaliser_math(t: str) -> str:
@@ -866,7 +724,7 @@ def _polices_pdf() -> dict:
 
 def _pdf_texte(t: str) -> str:
     """Échappe le texte pour reportlab et retire les caractères que la police ne sait pas dessiner (emojis)."""
-    t = re.sub("[\U00010000-\U0010FFFF\ufe0f\u200d\u26a0]", "", t)
+    t = re.sub("[\U00010000-\U0010FFFF\ufe0f\u200d\u26a0\u2705\u274c\u274e\u2728\u2b50\u2753\u2757\u26a1]", "", t)
     return html.escape(t, quote=False)
 
 
@@ -1224,8 +1082,9 @@ def cle_api():
         except Exception:
             cle = None
     if not cle:
-        cle = st.text_input("Clé API Gemini", type="password",
-                            help="Ou définis la variable GEMINI_API_KEY (secrets Streamlit).")
+        with st.expander("Réglages de l'IA", expanded=True):
+            cle = st.text_input("Clé API Gemini", type="password",
+                                help="Ou définis la variable GEMINI_API_KEY (secrets Streamlit).")
     return cle
 
 
@@ -1317,9 +1176,17 @@ def etapes():
         for k, (o, n) in enumerate(zip(ok, noms), 1)) + "</div>", unsafe_allow_html=True)
 
 
+def aller(page: str):
+    """Rappel de bouton : change de page sans repasser par la barre latérale."""
+    st.session_state.nav = page
+
+
 def besoin_cours():
     if not st.session_state.get("cours"):
-        st.info("Commence par charger un cours dans l'onglet **Mon cours**.")
+        st.markdown('<div class="vide"><b>Aucun cours chargé</b>Commence par déposer un cours (PDF ou Word) '
+                    'dans l\'onglet « Mon cours » : le reste de l\'application s\'appuie dessus.</div>',
+                    unsafe_allow_html=True)
+        st.button("Charger un cours", type="primary", on_click=aller, args=(PAGES[0],), key="va_cours")
         return None
     return st.session_state.cours
 
@@ -1340,32 +1207,25 @@ def page_connexion():
     st.markdown("<style>[data-testid='stSidebar'], [data-testid='collapsedControl'], "
                 "[data-testid='stSidebarCollapsedControl'] { display:none; }</style>",
                 unsafe_allow_html=True)
-    gauche, droite = st.columns([1.15, 1], gap="large")
+    gauche, droite = st.columns([1.12, 1], gap="large")
     with gauche:
         st.markdown(
-            '''<div class="marque-lg"><span class="logo">EL</span><b>Étudiants Learn</b></div>
-            <div class="titre-accueil">Révisez plus vite, à partir de vos propres cours.</div>
-            <p class="sous-accueil">Importez un cours au format PDF ou Word et obtenez des fiches de révision
-            structurées, des QCM corrigés et un assistant qui répond à vos questions.</p>
-            <ul class="atouts">
-              <li><i class="pt"></i><div><b>Résumés approfondis</b>
-                <span>Une fiche par chapitre : définitions, formules, démonstrations et exemples.
-                Export PDF, Word et Markdown.</span></div></li>
-              <li><i class="pt"></i><div><b>QCM jusqu'à 100 questions</b>
-                <span>Sur tout le cours ou par chapitre, avec correction détaillée et note sur 20.</span></div></li>
-              <li><i class="pt"></i><div><b>Assistant pédagogique</b>
-                <span>Explications pas à pas, exercices corrigés, conseils pour l'examen.</span></div></li>
-              <li><i class="pt"></i><div><b>Formules mathématiques</b>
-                <span>Rendu LaTeX soigné, dans l'application comme dans les exports.</span></div></li>
-            </ul>''', unsafe_allow_html=True)
+            f'''<div class="marque-lg"><span class="logo">EL</span><b>Étudiants Learn</b></div>
+<div class="titre-accueil">Révisez plus vite, <em>à partir de vos propres cours.</em></div>
+<p class="sous-accueil">Importez un cours au format PDF ou Word : obtenez des fiches de révision structurées,
+des QCM corrigés et un assistant qui répond à vos questions.</p>
+<div class="illus">{ILLUSTRATION}</div>
+<div class="chiffres"><div><b>PDF &amp; Word</b>formats acceptés</div>
+<div><b>100</b>questions par QCM</div><div><b>4</b>exports : PDF, Word, HTML, Markdown</div></div>''',
+            unsafe_allow_html=True)
     with droite:
-        st.markdown('<div class="acces-titre">Accéder à votre espace</div>'
-                    '<div class="acces-sous">Connectez-vous ou créez un compte pour sauvegarder vos cours, '
-                    'résumés et résultats.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="acces-titre">Accédez à votre espace</div>'
+                    '<div class="acces-sous">Connectez-vous ou créez un compte gratuit pour retrouver vos cours, '
+                    'résumés et résultats à tout moment.</div>', unsafe_allow_html=True)
         t1, t2 = st.tabs(["Connexion", "Créer un compte"])
         with t1:
             with st.form("login"):
-                email = st.text_input("Adresse e-mail")
+                email = st.text_input("Adresse e-mail", placeholder="nom@exemple.com")
                 mdp = st.text_input("Mot de passe", type="password")
                 if st.form_submit_button("Se connecter", type="primary", use_container_width=True):
                     u, err = connecter(email, mdp)
@@ -1376,8 +1236,8 @@ def page_connexion():
                         st.rerun()
         with t2:
             with st.form("signup"):
-                nom = st.text_input("Nom complet")
-                email = st.text_input("Adresse e-mail", key="se")
+                nom = st.text_input("Nom complet", placeholder="Prénom Nom")
+                email = st.text_input("Adresse e-mail", key="se", placeholder="nom@exemple.com")
                 mdp = st.text_input("Mot de passe (8 caractères minimum)", type="password", key="sm")
                 if st.form_submit_button("Créer mon compte", type="primary", use_container_width=True):
                     u, err = creer_compte(nom, email, mdp)
@@ -1386,6 +1246,16 @@ def page_connexion():
                     else:
                         st.session_state.user = u
                         st.rerun()
+        st.markdown(
+            '''<ul class="atouts">
+<li><i class="pt">✓</i><div><b>Résumés approfondis</b><span>Une fiche par chapitre : définitions, formules,
+démonstrations et exemples résolus.</span></div></li>
+<li><i class="pt">✓</i><div><b>QCM avec correction détaillée</b><span>Sur tout le cours ou par chapitre,
+avec une note sur 20 et vos points faibles.</span></div></li>
+<li><i class="pt">✓</i><div><b>Assistant pédagogique</b><span>Explications pas à pas, exercices corrigés,
+conseils pour l'examen.</span></div></li></ul>
+<div class="confiance">Vos cours et vos résultats sont liés à votre compte.</div>''',
+            unsafe_allow_html=True)
     st.markdown('<div class="section-titre">Nos services</div>', unsafe_allow_html=True)
     bloc_services()
     pied()
@@ -1432,6 +1302,11 @@ def page_cours(cle):
         with st.expander("Structure détectée", expanded=True):
             for i, c in enumerate(cours["chapitres"], 1):
                 st.markdown(f"**{i}. {c['titre']}**" + (f" — {c['desc']}" if c["desc"] else ""))
+        n1, n2, n3 = st.columns(3)
+        n1.button("Générer le résumé", type="primary", use_container_width=True, on_click=aller,
+                  args=(PAGES[1],), key="suite_resume")
+        n2.button("Passer un QCM", use_container_width=True, on_click=aller, args=(PAGES[2],), key="suite_qcm")
+        n3.button("Poser une question", use_container_width=True, on_click=aller, args=(PAGES[3],), key="suite_chat")
 
     if uid():
         st.divider()
@@ -1453,46 +1328,20 @@ def page_cours(cle):
                     st.rerun()
 
 
+@st.cache_data(show_spinner=False, max_entries=6)
+def pdf_en_cache(r_json: str) -> bytes:
+    return resume_en_pdf(json.loads(r_json))
+
+
+@st.cache_data(show_spinner=False, max_entries=6)
+def docx_en_cache(r_json: str) -> bytes:
+    return resume_en_docx(json.loads(r_json))
+
+
 def afficher_resume(r: dict, cle_export: str):
     st.header(r["titre"])
     st.caption(f"Niveau : {r.get('niveau', '')} · généré le {r.get('cree', '')}")
-    md = resume_en_markdown(r)
-
-    # Exports lourds (PDF, Word) : générés à la demande, puis proposés au téléchargement
-    cp, cw = st.columns(2)
-    with cp:
-        prete = st.session_state.get("pdf")
-        if prete and prete[0] == cle_export:
-            st.download_button("Télécharger le PDF", prete[1], file_name=f"{slug(r['titre'])}.pdf",
-                               mime="application/pdf", type="primary", use_container_width=True,
-                               key=f"dpdf{cle_export}")
-        elif st.button("Préparer le PDF", type="primary", use_container_width=True, key=f"ppdf{cle_export}"):
-            try:
-                with st.spinner("Création du PDF (rendu des formules)…"):
-                    st.session_state.pdf = (cle_export, resume_en_pdf(r))
-                st.rerun()
-            except Exception as e:
-                st.error(f"Impossible de créer le PDF : {e}")
-    with cw:
-        prete = st.session_state.get("docx")
-        if prete and prete[0] == cle_export:
-            st.download_button("Télécharger le fichier Word", prete[1], file_name=f"{slug(r['titre'])}.docx",
-                               mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                               use_container_width=True, key=f"dw{cle_export}")
-        elif st.button("Préparer le fichier Word", use_container_width=True, key=f"pw{cle_export}"):
-            try:
-                with st.spinner("Création du document Word (rendu des formules)…"):
-                    st.session_state.docx = (cle_export, resume_en_docx(r))
-                st.rerun()
-            except Exception as e:
-                st.error(f"Impossible de créer le document Word : {e}")
-
-    c3, c4 = st.columns(2)
-    c3.download_button("Télécharger en HTML", md_vers_html(md, r["titre"]).encode("utf-8"),
-                       file_name=f"{slug(r['titre'])}.html", mime="text/html", use_container_width=True,
-                       help="Version web avec formules MathJax.")
-    c4.download_button("Télécharger en Markdown", md.encode("utf-8"), file_name=f"{slug(r['titre'])}.md",
-                       mime="text/markdown", use_container_width=True)
+    zone_export = st.container()          # rempli après l'affichage : le résumé apparaît sans attendre le PDF
     st.divider()
     st.markdown(r["apercu"])
     st.divider()
@@ -1500,6 +1349,35 @@ def afficher_resume(r: dict, cle_export: str):
     for i, s in enumerate(r["sections"]):
         with st.expander(f"{i + 1}. {s['titre']}", expanded=(i == 0 and len(r["sections"]) == 1)):
             st.markdown(s["md"])
+
+    md = resume_en_markdown(r)
+    r_json = json.dumps(r, sort_keys=True, default=str)
+    with zone_export:
+        cp, cw = st.columns(2)
+        with cp:
+            try:
+                with st.spinner("Préparation du PDF…"):
+                    pdf = pdf_en_cache(r_json)
+                st.download_button("Télécharger en PDF", pdf, file_name=f"{slug(r['titre'])}.pdf",
+                                   mime="application/pdf", type="primary", use_container_width=True,
+                                   key=f"dpdf{cle_export}")
+            except Exception as e:
+                st.error(f"Impossible de créer le PDF : {e}")
+        with cw:
+            try:
+                with st.spinner("Préparation du fichier Word…"):
+                    docx_octets = docx_en_cache(r_json)
+                st.download_button("Télécharger en Word", docx_octets, file_name=f"{slug(r['titre'])}.docx",
+                                   mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                   use_container_width=True, key=f"dw{cle_export}")
+            except Exception as e:
+                st.error(f"Impossible de créer le document Word : {e}")
+        c3, c4 = st.columns(2)
+        c3.download_button("Télécharger en HTML", md_vers_html(md, r["titre"]).encode("utf-8"),
+                           file_name=f"{slug(r['titre'])}.html", mime="text/html", use_container_width=True,
+                           help="Version web avec formules MathJax.", key=f"dh{cle_export}")
+        c4.download_button("Télécharger en Markdown", md.encode("utf-8"), file_name=f"{slug(r['titre'])}.md",
+                           mime="text/markdown", use_container_width=True, key=f"dm{cle_export}")
 
 
 def page_resume(cle):
@@ -1664,16 +1542,23 @@ def page_chat(cle):
     if not cours:
         return
     msgs = st.session_state.setdefault("chat", [])
+    visuel = False
+    if cours.get("pdf"):
+        visuel = st.toggle("Lecture visuelle du PDF (formules, schémas, scans) — plus lent", value=False,
+                           key="chat_visuel", help="Par défaut, l'assistant lit le texte du cours : réponses plus rapides.")
+
+    zone_sugg = st.empty()
     if not msgs:
-        st.caption("Suggestions pour démarrer")
-        sug = {"Notions essentielles": "Explique-moi simplement les notions les plus importantes du cours.",
-               "Exercices corrigés": "Donne-moi 3 exercices corrigés pas à pas sur ce cours.",
-               "Erreurs à éviter": "Quelles sont les erreurs classiques à éviter à l'examen ?"}
-        cols = st.columns(len(sug))
-        for col, (libelle, question_type) in zip(cols, sug.items()):
-            if col.button(libelle, use_container_width=True, key=f"sug_{libelle}"):
-                st.session_state.question_en_attente = question_type
-                st.rerun()
+        with zone_sugg.container():
+            st.markdown('<div class="sugg-titre">Pour démarrer</div>', unsafe_allow_html=True)
+            sug = {"Notions essentielles": "Explique-moi simplement les notions les plus importantes du cours.",
+                   "Exercices corrigés": "Donne-moi 3 exercices corrigés pas à pas sur ce cours.",
+                   "Erreurs à éviter": "Quelles sont les erreurs classiques à éviter à l'examen ?"}
+            cols = st.columns(len(sug))
+            for col, (libelle, question_type) in zip(cols, sug.items()):
+                if col.button(libelle, use_container_width=True, key=f"sug_{libelle}"):
+                    st.session_state.question_en_attente = question_type
+                    st.rerun()
     for m in msgs:
         with st.chat_message("user" if m["role"] == "user" else "assistant"):
             st.markdown(m["content"])
@@ -1681,26 +1566,38 @@ def page_chat(cle):
     question = st.chat_input("Pose ta question sur le cours…") or st.session_state.pop("question_en_attente", None)
     if question:
         if not cle:
-            st.error("Ajoute ta clé API Gemini.")
+            st.error("Ajoute ta clé API Gemini dans la barre latérale.")
             return
+        zone_sugg.empty()
         msgs.append({"role": "user", "content": question})
         with st.chat_message("user"):
             st.markdown(question)
         histo = msgs[-20:]
+        while histo and histo[0]["role"] != "user":
+            histo = histo[1:]
         contenu = [
-            types.Content(role="user", parts=parts_cours(cours) + [
+            types.Content(role="user", parts=parts_chat(cours, visuel) + [
                 types.Part.from_text(text="Voici mon cours. Sers-t'en comme base pour répondre à mes questions.")]),
             types.Content(role="model", parts=[types.Part.from_text(text="Compris, je suis prêt à t'aider.")]),
         ] + [types.Content(role="user" if m["role"] == "user" else "model",
                            parts=[types.Part.from_text(text=m["content"])]) for m in histo]
         with st.chat_message("assistant"):
+            zone = st.empty()
+            zone.markdown("*L'assistant rédige sa réponse…*")
+            acc = ""
             try:
-                rep = st.write_stream(flux_chat(contenu, cle, SYSTEME_CHAT))
-                msgs.append({"role": "assistant", "content": normaliser_math(rep)})
+                for morceau in flux_chat(contenu, cle, SYSTEME_CHAT):
+                    acc += morceau
+                    zone.markdown(normaliser_math(acc) + " ▌")
+                if not acc.strip():
+                    raise RuntimeError("réponse vide, réessaie.")
+                final = normaliser_math(acc)
+                zone.markdown(final)                      # pas de rechargement de page : la réponse reste affichée
+                msgs.append({"role": "assistant", "content": final})
                 sauver_chat(cours.get("id"), msgs)
-                st.rerun()
             except Exception as e:
                 msgs.pop()
+                zone.empty()
                 st.error(f"Erreur : {e}")
     if msgs and st.button("Effacer la conversation"):
         st.session_state.chat = []

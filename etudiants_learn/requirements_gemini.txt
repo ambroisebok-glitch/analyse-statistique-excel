@@ -1,0 +1,6 @@
+streamlit>=1.40
+google-genai
+pypdf
+python-docx
+markdown
+matplotlib
