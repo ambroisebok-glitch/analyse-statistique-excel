@@ -1,19 +1,16 @@
 """
 Étudiants Learn (version Gemini) – cours (PDF/Word) -> résumé approfondi, QCM par chapitre (jusqu'à 100),
-assistant IA, comptes utilisateurs et exports (PDF, Word, HTML, Markdown).
+assistant IA et exports (PDF, Word, HTML, Markdown). Utilisation directe, sans compte.
+Services : traitement et analyse de données, accompagnement à la rédaction de mémoire.
 Auteur : BOKOUMBO Tibetobe Ambroise
 Contact : ambroisebok@gmail.com | +228 91942948
 """
-import hashlib
-import hmac
 import html
 import io
 import json
 import os
 import random
 import re
-import secrets
-import sqlite3
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -38,85 +35,106 @@ MAX_PDF_OCTETS = 10 * 1024 * 1024   # taille max d'un PDF envoyé directement à
 LOT_QCM = 20                        # questions générées par appel
 MAX_QCM = 100
 LETTRES = "ABCD"
-# Chemin stable : dossier de l'application, sauf si DB_PATH est défini dans l'environnement.
-_db_env = os.getenv("DB_PATH", "").strip()
-if _db_env:
-    DB_PATH = os.path.abspath(os.path.expanduser(_db_env))
-else:
-    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "revisepro.db")
-PAGES = ["Mon cours", "Résumé", "QCM", "Assistant", "Historique", "Services & contact"]
+PAGES = ["Accueil", "Mon cours", "Résumé", "QCM", "Assistant", "Historique", "Services & contact"]
 
 AUTEUR = "BOKOUMBO Tibetobe Ambroise"
 EMAIL = "ambroisebok@gmail.com"
-TEL_REP = ("+228 96286244", "+22896286244")   # répétitions + démarches
+TEL_REP = ("+228 96286244", "+22896286244")   # contact services (données, mémoire)
 TEL_AMB = ("+228 91942948", "+22891942948")   # contact principal
 APP_URL = "https://etudiantslearn.streamlit.app/"
 SEO_TITRE = "Étudiants Learn – Résumés de cours, QCM et assistant IA"
 SEO_DESC = ("Étudiants Learn aide les étudiants à réviser leurs cours PDF ou Word grâce à des résumés "
-            "approfondis, des QCM corrigés jusqu'à 100 questions et un assistant IA pour comprendre les cours "
-            "et préparer les examens.")
+            "approfondis, des QCM corrigés jusqu'à 100 questions et un assistant IA. Accompagnement "
+            "en traitement de données et en rédaction de mémoire.")
 
 st.set_page_config(
-    page_title=SEO_TITRE, page_icon="🎓", layout="wide", initial_sidebar_state="expanded",
+    page_title=SEO_TITRE, page_icon="🎓", layout="wide", initial_sidebar_state="collapsed",
     menu_items={"About": f"**Étudiants Learn** — conçu par {AUTEUR} · {EMAIL} · {TEL_AMB[0]}"})
 
 st.markdown(
     """
 <style>
-:root { --ink:#0F172A; --muted:#64748B; --line:#E2E8F0; --bg:#F8FAFC;
-        --accent:#4338CA; --accent-d:#3730A3; --accent-l:#EEF2FF; }
-.stApp { font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; color:var(--ink);
-  background-color:#F6F7FB;
-  background-image:
-    radial-gradient(900px 520px at 6% -8%, rgba(67,56,202,.10), transparent 65%),
-    radial-gradient(800px 500px at 100% 8%, rgba(14,165,233,.07), transparent 65%),
-    url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cg font-family='Georgia,serif' fill='%234338CA' fill-opacity='.075'%3E%3Ctext x='28' y='70' font-size='34'%3E∑%3C/text%3E%3Ctext x='170' y='52' font-size='22' font-style='italic'%3Ef(x) = ∫ g(t)dt%3C/text%3E%3Ctext x='300' y='130' font-size='38'%3Eπ%3C/text%3E%3Ctext x='60' y='190' font-size='24' font-style='italic'%3E√(a²+b²)%3C/text%3E%3Ctext x='250' y='230' font-size='30'%3EΔ%3C/text%3E%3Ctext x='30' y='320' font-size='22' font-style='italic'%3Ee^(iπ) + 1 = 0%3C/text%3E%3Ctext x='230' y='350' font-size='34'%3E∞%3C/text%3E%3Ctext x='340' y='300' font-size='26'%3Eα β%3C/text%3E%3C/g%3E%3C/svg%3E"),
-    linear-gradient(rgba(67,56,202,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(67,56,202,.045) 1px, transparent 1px);
-  background-size:auto, auto, 420px 420px, 32px 32px, 32px 32px; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+:root { --navy:#12306B; --navy-d:#0B2147; --gold:#C9A227; --gold-l:#FBF5DF; --ink:#1B2433;
+        --muted:#5F6B7F; --line:#DDE3EC; --bg:#EEF1F6; --accent:#12306B; --accent-d:#0B2147;
+        --accent-l:#EAF0FA; --serif:'Playfair Display',Georgia,'Times New Roman',serif; }
+html, body, .stApp { font-family:'Inter',-apple-system,'Segoe UI',Roboto,Arial,sans-serif; color:var(--ink); }
+.stApp { background:var(--bg); }
+h1, h2, h3 { font-family:var(--serif); color:var(--navy-d); letter-spacing:-.005em; }
 #MainMenu, footer { visibility:hidden; }
-header[data-testid="stHeader"] { background:transparent; }
+header[data-testid="stHeader"] { display:none; }
+[data-testid="stSidebar"], [data-testid="collapsedControl"], [data-testid="stSidebarCollapsedControl"] { display:none; }
 iframe[height="0"] { display:none; }
-.block-container { padding-top:2rem; padding-bottom:6.5rem; max-width:1080px;
-  background:rgba(255,255,255,.92);
-  border:1px solid var(--line); border-radius:20px; margin-top:1rem;
-  box-shadow:0 10px 40px rgba(15,23,42,.05); }
+.block-container { padding:0 2.2rem 0 2.2rem; max-width:1180px; background:#fff;
+  border-left:1px solid var(--line); border-right:1px solid var(--line);
+  box-shadow:0 0 40px rgba(11,33,71,.07); }
 
-/* Barre latérale */
-[data-testid="stSidebar"] { background:#FFFFFF; border-right:1px solid var(--line); }
-.marque { display:flex; align-items:center; gap:.7rem; margin:.2rem 0 1rem 0; }
-.marque .logo { width:36px; height:36px; border-radius:10px; background:var(--accent); color:#fff;
-  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.95rem;
-  letter-spacing:.02em; }
-.marque b { font-size:1.12rem; font-weight:700; color:var(--ink); letter-spacing:-.01em; }
-.profil { display:flex; align-items:center; gap:.7rem; padding:.65rem .8rem; border:1px solid var(--line);
-  border-radius:12px; background:var(--bg); margin-bottom:1rem; }
-.profil .av { flex:0 0 34px; height:34px; border-radius:50%; background:var(--accent-l); color:var(--accent);
-  font-weight:700; display:flex; align-items:center; justify-content:center; }
-.profil .n { font-weight:600; font-size:.88rem; line-height:1.25; }
-.profil .e { font-size:.74rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis;
-  white-space:nowrap; max-width:150px; }
-[data-testid="stSidebar"] [role="radiogroup"] { gap:.15rem; }
-[data-testid="stSidebar"] [role="radiogroup"] label { padding:.55rem .8rem; border-radius:10px;
-  width:100%; transition:background .15s; }
-[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child { display:none; }
-[data-testid="stSidebar"] [role="radiogroup"] label:hover { background:#F1F5F9; }
-[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) { background:var(--accent-l); }
-[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p { color:var(--accent); font-weight:600; }
-.cours-actif { border:1px solid var(--line); border-radius:12px; padding:.65rem .8rem; background:#fff;
-  margin-bottom:.8rem; }
-.cours-actif span { display:block; font-size:.68rem; font-weight:700; letter-spacing:.08em;
-  color:var(--muted); margin-bottom:.15rem; }
-.cours-actif b { font-size:.85rem; font-weight:600; word-break:break-word; }
-.promo { border-top:1px solid var(--line); padding-top:.8rem; font-size:.78rem; color:var(--muted);
-  line-height:1.55; }
-.promo b { color:var(--ink); }
+/* En-tête du site : barre d'information, identité, menu */
+.st-key-top { gap:0 !important; margin:0 -2.2rem -1rem -2.2rem; }
+.topbar { background:var(--navy-d); color:#C3D0E8; font-size:.78rem; padding:.5rem 2.2rem;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:.3rem 1.5rem; }
+.topbar a { color:#fff !important; text-decoration:none; font-weight:500; }
+.topbar a:hover { text-decoration:underline; }
+.topbar .sep { opacity:.35; margin:0 .5rem; }
+.entete-site { display:flex; align-items:center; gap:1rem; padding:1.15rem 2.2rem; background:#fff;
+  border-bottom:1px solid var(--line); }
+.entete-site .logo { width:54px; height:54px; border-radius:50%; background:var(--navy); color:var(--gold);
+  border:3px solid var(--gold); display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); font-weight:700; font-size:1.2rem; letter-spacing:.02em; flex:0 0 54px; }
+.entete-site .nom { font-family:var(--serif); font-size:1.65rem; font-weight:700; color:var(--navy-d);
+  line-height:1.1; }
+.entete-site .devise { font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+  margin-top:.25rem; }
+.st-key-navbar { background:var(--navy); padding:0 2.2rem; }
+.st-key-navbar [role="radiogroup"] { gap:0; flex-wrap:nowrap; overflow-x:auto; }
+.st-key-navbar [role="radiogroup"] label { padding:.85rem 1.05rem; margin:0; border-radius:0;
+  border-bottom:3px solid transparent; white-space:nowrap; cursor:pointer; transition:background .15s; }
+.st-key-navbar [role="radiogroup"] label > div:first-child { display:none; }
+.st-key-navbar [role="radiogroup"] label p { color:#DCE5F5; font-size:.9rem; font-weight:500; }
+.st-key-navbar [role="radiogroup"] label:hover { background:rgba(255,255,255,.08); }
+.st-key-navbar [role="radiogroup"] label:has(input:checked) { border-bottom-color:var(--gold);
+  background:rgba(255,255,255,.10); }
+.st-key-navbar [role="radiogroup"] label:has(input:checked) p { color:#fff; font-weight:700; }
 
-/* En-tête de page et étapes */
-.entete { margin:0 0 1.4rem 0; padding-bottom:1rem; border-bottom:1px solid var(--line); }
-.entete h1 { font-size:1.65rem; font-weight:700; margin:0; padding:0; color:var(--ink);
-  letter-spacing:-.02em; }
-.entete p { margin:.35rem 0 0 0; color:var(--muted); font-size:.98rem; max-width:760px; }
+/* Bandeau de page (pages intérieures) */
+.banniere { background:linear-gradient(120deg,var(--navy-d),var(--navy) 70%,#1D4690); color:#fff;
+  padding:2rem 2.2rem 1.8rem; margin:0 -2.2rem 1.8rem -2.2rem; border-bottom:4px solid var(--gold); }
+.banniere .fil { font-size:.78rem; color:#B9C7E2; margin-bottom:.55rem; }
+.banniere h1 { font-family:var(--serif); color:#fff; font-size:2rem; line-height:1.15; margin:0; padding:0; }
+.banniere p { color:#D5DFF1; margin:.55rem 0 0 0; max-width:780px; font-size:.98rem; line-height:1.55; }
+.banniere .chip { display:inline-block; margin-top:.95rem; background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.28); border-radius:999px; padding:.22rem .85rem; font-size:.78rem; }
+
+/* Page d'accueil */
+.hero { position:relative; overflow:hidden; color:#fff; padding:3.6rem 2.2rem 3.4rem;
+  margin:0 -2.2rem 1.4rem -2.2rem; border-bottom:4px solid var(--gold);
+  background:linear-gradient(115deg,var(--navy-d) 0%,var(--navy) 60%,#1F4C9A 100%); }
+.hero::after { content:"∑  π  ∫  Δ  ∞"; position:absolute; right:1.5rem; bottom:-1.4rem;
+  font-family:Georgia,serif; font-size:7rem; color:rgba(255,255,255,.06); white-space:nowrap; }
+.hero .kicker { text-transform:uppercase; letter-spacing:.16em; font-size:.74rem; color:var(--gold);
+  font-weight:700; margin-bottom:.9rem; }
+.hero h1 { font-family:var(--serif); color:#fff; font-size:2.7rem; line-height:1.15; margin:0 0 1rem 0;
+  padding:0; max-width:780px; }
+.hero p { color:#D5DFF1; font-size:1.05rem; line-height:1.65; max-width:640px; margin:0; position:relative; z-index:1; }
+.chiffres { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); border:1px solid var(--line);
+  border-radius:6px; margin:.6rem 0 .4rem 0; overflow:hidden; }
+.chiffres div { padding:1.2rem 1rem; text-align:center; background:#fff; border-right:1px solid var(--line); }
+.chiffres div:last-child { border-right:none; }
+.chiffres b { display:block; font-family:var(--serif); font-size:2rem; color:var(--navy); line-height:1.1; }
+.chiffres span { font-size:.8rem; color:var(--muted); }
+.section-titre { font-family:var(--serif); font-size:1.5rem; font-weight:700; color:var(--navy-d);
+  margin:2.4rem 0 1.1rem 0; padding-bottom:.6rem; position:relative; }
+.section-titre::after { content:""; position:absolute; left:0; bottom:0; width:56px; height:3px;
+  background:var(--gold); }
+.cartes { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1.1rem;
+  margin:.4rem 0 1rem 0; }
+.carte { border:1px solid var(--line); border-top:3px solid var(--navy); border-radius:4px;
+  padding:1.2rem 1.3rem; background:#fff; transition:box-shadow .2s, transform .2s; }
+.carte:hover { box-shadow:0 10px 26px rgba(11,33,71,.10); transform:translateY(-2px); }
+.carte .tag { font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:.45rem; }
+.carte h4 { margin:0 0 .4rem 0; font-family:var(--serif); font-size:1.15rem; color:var(--navy-d); }
+.carte p { margin:0; color:#4A566A; font-size:.88rem; line-height:1.6; }
 .etapes { display:flex; flex-wrap:wrap; gap:.5rem; margin:0 0 1.4rem 0; }
 .etape { display:inline-flex; align-items:center; gap:.5rem; padding:.3rem .85rem .3rem .35rem;
   border:1px solid var(--line); border-radius:999px; background:#fff; font-size:.82rem;
@@ -126,92 +144,73 @@ iframe[height="0"] { display:none; }
 .etape.ok { color:#065F46; border-color:#A7F3D0; background:#F0FDF4; }
 .etape.ok i { background:#10B981; color:#fff; }
 
-/* Cartes */
-.cartes { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem;
-  margin:.5rem 0 1.5rem 0; }
-.carte { border:1px solid var(--line); border-radius:14px; padding:1.1rem 1.2rem; background:#fff; }
-.carte .tag { font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-  color:var(--accent); margin-bottom:.45rem; }
-.carte h4 { margin:0 0 .35rem 0; font-size:1rem; font-weight:600; color:var(--ink); }
-.carte p { margin:0; color:#475569; font-size:.88rem; line-height:1.55; }
-.section-titre { font-size:1.05rem; font-weight:700; margin:1.8rem 0 .4rem 0; color:var(--ink); }
-
-/* Page de connexion */
-.marque-lg { display:flex; align-items:center; gap:.75rem; }
-.marque-lg .logo { width:42px; height:42px; border-radius:12px; background:var(--accent); color:#fff;
-  display:flex; align-items:center; justify-content:center; font-weight:800; letter-spacing:.02em; }
-.marque-lg b { font-size:1.25rem; font-weight:700; letter-spacing:-.01em; }
-.titre-accueil { font-size:2.3rem; font-weight:800; line-height:1.15; letter-spacing:-.03em;
-  margin:1.6rem 0 .8rem 0; color:var(--ink); }
-.sous-accueil { color:#475569; font-size:1.02rem; line-height:1.6; max-width:520px; margin:0; }
-.atouts { list-style:none; padding:0; margin:1.6rem 0 0 0; display:grid; gap:1rem; }
-.atouts li { display:flex; gap:.85rem; align-items:flex-start; }
-.atouts .pt { flex:0 0 8px; height:8px; border-radius:50%; background:var(--accent); margin-top:.5rem; }
-.atouts b { display:block; font-size:.95rem; font-weight:600; }
-.atouts span { color:#475569; font-size:.88rem; line-height:1.5; }
-.acces-titre { font-size:1.25rem; font-weight:700; margin:.2rem 0 .2rem 0; }
-.acces-sous { color:var(--muted); font-size:.9rem; margin-bottom:.8rem; }
-
 /* Boutons et composants Streamlit */
-.btn { display:inline-block; padding:.55rem 1rem; border-radius:10px; font-weight:600; font-size:.88rem;
-  text-decoration:none !important; background:var(--accent); color:#fff !important;
+.btn { display:inline-block; padding:.6rem 1.1rem; border-radius:4px; font-weight:600; font-size:.88rem;
+  text-decoration:none !important; background:var(--navy); color:#fff !important;
   margin:.25rem .4rem .25rem 0; }
-.btn:hover { background:var(--accent-d); }
+.btn:hover { background:var(--navy-d); }
 .btn.wa { background:#15803D; } .btn.wa:hover { background:#166534; }
-.btn.clair { background:var(--accent-l); color:var(--accent) !important; }
-.stButton>button, .stDownloadButton>button { border-radius:10px; font-weight:600;
+.btn.clair { background:var(--accent-l); color:var(--navy) !important; }
+.stButton>button, .stDownloadButton>button { border-radius:4px; font-weight:600;
   border:1px solid var(--line); transition:all .15s; }
-.stButton>button:hover, .stDownloadButton>button:hover { border-color:var(--accent); color:var(--accent); }
+.stButton>button:hover, .stDownloadButton>button:hover { border-color:var(--navy); color:var(--navy); }
 .stButton>button[kind="primary"], .stDownloadButton>button[kind="primary"],
 button[data-testid="stBaseButton-primary"], button[data-testid="stBaseButton-primaryFormSubmit"] {
-  background:var(--accent); border:1px solid var(--accent); color:#fff; }
+  background:var(--navy); border:1px solid var(--navy); color:#fff; }
 .stButton>button[kind="primary"]:hover, .stDownloadButton>button[kind="primary"]:hover,
 button[data-testid="stBaseButton-primary"]:hover, button[data-testid="stBaseButton-primaryFormSubmit"]:hover {
-  background:var(--accent-d); border-color:var(--accent-d); color:#fff; }
-div[data-testid="stMetric"] { background:#fff; border:1px solid var(--line); border-radius:12px;
-  padding:.9rem 1.1rem; }
-div[data-testid="stExpander"] { border:1px solid var(--line); border-radius:12px; background:#fff; }
-div[data-testid="stForm"] { border:1px solid var(--line); border-radius:14px; background:#fff; }
-[data-testid="stFileUploaderDropzone"] { border:1.5px dashed #CBD5E1; background:#fff; border-radius:12px; }
-[data-testid="stChatMessage"] { background:#fff; border:1px solid var(--line); border-radius:12px; }
-[data-testid="stVerticalBlockBorderWrapper"] { border-radius:12px; }
+  background:var(--navy-d); border-color:var(--navy-d); color:#fff; }
+div[data-testid="stMetric"] { background:#fff; border:1px solid var(--line); border-left:3px solid var(--gold);
+  border-radius:4px; padding:.9rem 1.1rem; }
+div[data-testid="stExpander"] { border:1px solid var(--line); border-radius:6px; background:#fff; }
+div[data-testid="stForm"] { border:1px solid var(--line); border-radius:6px; background:#fff; }
+[data-testid="stFileUploaderDropzone"] { border:1.5px dashed #B8C4D8; background:#F8FAFD; border-radius:6px; }
+[data-testid="stChatMessage"] { background:#fff; border:1px solid var(--line); border-radius:8px; }
+[data-testid="stVerticalBlockBorderWrapper"] { border-radius:6px; }
 
 /* Services */
-.services { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.1rem;
+.services { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.2rem;
   margin:.6rem 0 1.6rem 0; }
-.service { background:#fff; border:1px solid var(--line); border-radius:16px; padding:1.3rem 1.3rem 1.1rem;
-  display:flex; flex-direction:column; transition:box-shadow .2s, transform .2s, border-color .2s; }
-.service:hover { box-shadow:0 12px 30px rgba(67,56,202,.10); transform:translateY(-2px);
-  border-color:#C7D2FE; }
-.service .ico { width:44px; height:44px; border-radius:12px; background:var(--accent-l);
-  color:var(--accent); display:flex; align-items:center; justify-content:center; margin-bottom:.9rem; }
+.service { background:#fff; border:1px solid var(--line); border-top:3px solid var(--gold); border-radius:4px;
+  padding:1.4rem 1.4rem 1.1rem; display:flex; flex-direction:column;
+  transition:box-shadow .2s, transform .2s; }
+.service:hover { box-shadow:0 12px 30px rgba(11,33,71,.10); transform:translateY(-2px); }
+.service .ico { width:46px; height:46px; border-radius:50%; background:var(--accent-l); color:var(--navy);
+  display:flex; align-items:center; justify-content:center; margin-bottom:.9rem; }
 .service .ico svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8;
   stroke-linecap:round; stroke-linejoin:round; }
-.service h4 { margin:0 0 .35rem 0; font-size:1.05rem; font-weight:700; color:var(--ink); }
-.service > p { margin:0 0 .8rem 0; color:#475569; font-size:.88rem; line-height:1.6; }
-.service ul { margin:0 0 1rem 0; padding:0; list-style:none; display:grid; gap:.35rem; }
-.service li { font-size:.85rem; color:#334155; padding-left:1.15rem; position:relative; }
+.service .tag { font-size:.68rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:.2rem; }
+.service h4 { margin:0 0 .4rem 0; font-family:var(--serif); font-size:1.2rem; color:var(--navy-d); }
+.service > p { margin:0 0 .8rem 0; color:#4A566A; font-size:.88rem; line-height:1.6; }
+.service ul { margin:0 0 1rem 0; padding:0; list-style:none; display:grid; gap:.4rem; }
+.service li { font-size:.86rem; color:#334155; padding-left:1.15rem; position:relative; }
 .service li::before { content:""; position:absolute; left:0; top:.5em; width:6px; height:6px;
-  border-radius:50%; background:var(--accent); }
+  background:var(--gold); transform:rotate(45deg); }
 .service .contact { margin-top:auto; padding-top:.8rem; border-top:1px solid var(--line);
   font-size:.8rem; color:var(--muted); }
 .service .contact b { color:var(--ink); }
-.parcours { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem;
-  margin:.5rem 0 1.5rem 0; }
-.parcours div { border-left:3px solid var(--accent); padding:.2rem 0 .2rem .9rem; }
-.parcours b { display:block; font-size:.92rem; }
-.parcours span { font-size:.84rem; color:#475569; line-height:1.5; }
+.parcours { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.2rem;
+  margin:.5rem 0 1.5rem 0; counter-reset:etape; }
+.parcours div { border-left:3px solid var(--gold); background:#F8FAFD; padding:.9rem 1rem; border-radius:0 4px 4px 0; }
+.parcours b { display:block; font-family:var(--serif); font-size:1.02rem; color:var(--navy-d); margin-bottom:.2rem; }
+.parcours span { font-size:.85rem; color:#4A566A; line-height:1.55; }
 
-/* Barre d'information en bas */
-.barre-pied { position:fixed; left:0; right:0; bottom:0; z-index:99; background:#0F172A; color:#94A3B8;
-  padding:.55rem 1rem; text-align:center; font-size:.78rem; line-height:1.5; }
-.barre-pied a { color:#E2E8F0 !important; text-decoration:none; font-weight:500; }
-.barre-pied a:hover { text-decoration:underline; }
-.barre-pied b { color:#F8FAFC; font-weight:600; }
-.barre-pied .sep { opacity:.35; margin:0 .6rem; }
-.barre-pied .sec { display:block; font-size:.72rem; margin-top:.1rem; }
-@media (max-width: 640px) {
-  .barre-pied { font-size:.7rem; } .entete h1 { font-size:1.35rem; } .titre-accueil { font-size:1.7rem; } }
+/* Pied de page */
+.pied-site { background:var(--navy-d); color:#B9C7E2; margin:3rem -2.2rem 0 -2.2rem;
+  padding:2.5rem 2.2rem 0; border-top:4px solid var(--gold); }
+.pied-site .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:2rem; }
+.pied-site h5 { color:#fff; font-family:var(--serif); font-size:1.05rem; margin:0 0 .8rem 0; }
+.pied-site p, .pied-site li { font-size:.85rem; line-height:1.75; margin:0; }
+.pied-site ul { list-style:none; padding:0; margin:0; }
+.pied-site a { color:#E2E8F5 !important; text-decoration:none; }
+.pied-site a:hover { text-decoration:underline; }
+.pied-site .copy { border-top:1px solid rgba(255,255,255,.14); margin-top:1.8rem; padding:1rem 0;
+  font-size:.76rem; text-align:center; color:#8FA2C4; }
+@media (max-width: 700px) {
+  .block-container, .banniere, .hero, .pied-site, .topbar, .entete-site, .st-key-navbar { }
+  .hero h1 { font-size:2rem; } .banniere h1 { font-size:1.5rem; } .entete-site .nom { font-size:1.3rem; }
+  .topbar { font-size:.7rem; } }
 </style>
 """,
     unsafe_allow_html=True,
@@ -242,7 +241,7 @@ def injecter_seo():
         m.setAttribute("content", v); };
       meta("name", "description", D.desc);
       meta("name", "keywords", "réviser cours, résumé de cours IA, QCM en ligne, quiz, assistant IA étudiant, " +
-        "répétiteur Togo, démarches en ligne Togo, passeport, nationalité, casier judiciaire");
+        "traitement de données, analyse de données, rédaction de mémoire, aide mémoire étudiant, Togo");
       meta("name", "author", "BOKOUMBO Tibetobe Ambroise");
       meta("name", "robots", "index, follow");
       meta("property", "og:type", "website"); meta("property", "og:title", D.titre);
@@ -268,139 +267,57 @@ injecter_seo()
 
 
 # ----------------------------------------------------------------------------
-# Base de données (SQLite) et comptes utilisateurs
+# Stockage de la session (sans compte, sans base de données partagée)
 # ----------------------------------------------------------------------------
+# Chaque visiteur travaille dans sa propre session : ses cours, résumés et QCM ne sont visibles
+# que de lui et disparaissent à la fermeture ou à l'actualisation de la page (pensez à télécharger
+# vos fiches). Cela évite aussi de mélanger les données de visiteurs différents.
 def maintenant() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
-def sql(requete, params=(), fetch=None):
-    init_db()  # no-op après le premier appel (mis en cache)
-    c = sqlite3.connect(DB_PATH, timeout=10)
-    c.row_factory = sqlite3.Row
-    try:
-        cur = c.execute(requete, params)
-        c.commit()
-        if fetch == "one":
-            r = cur.fetchone()
-            return dict(r) if r else None
-        if fetch == "all":
-            return [dict(r) for r in cur.fetchall()]
-        return cur.lastrowid
-    finally:
-        c.close()
+def stock() -> dict:
+    return st.session_state.setdefault(
+        "stock", {"seq": 0, "cours": {}, "resumes": {}, "qcms": {}, "tentatives": [], "chats": {}})
 
 
-@st.cache_resource(show_spinner=False)
-def _creer_base(chemin: str) -> bool:
-    dossier_db = os.path.dirname(chemin)
-    if dossier_db:
-        os.makedirs(dossier_db, exist_ok=True)
-    c = sqlite3.connect(chemin, timeout=10)
-    try:
-        try:
-            c.execute("PRAGMA journal_mode=WAL")  # lectures/écritures simultanées sans blocage
-        except sqlite3.DatabaseError:
-            pass
-        c.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS users(
-                id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, nom TEXT,
-                sel TEXT, hash TEXT, cree TEXT);
-            CREATE TABLE IF NOT EXISTS cours(
-                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, nom TEXT,
-                texte TEXT, pdf BLOB, chapitres TEXT, cree TEXT);
-            CREATE TABLE IF NOT EXISTS resumes(
-                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cours_id INTEGER,
-                titre TEXT, contenu TEXT, cree TEXT);
-            CREATE TABLE IF NOT EXISTS qcms(
-                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, cours_id INTEGER,
-                titre TEXT, data TEXT, cree TEXT);
-            CREATE TABLE IF NOT EXISTS tentatives(
-                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, qcm_id INTEGER,
-                score INTEGER, total INTEGER, cree TEXT);
-            CREATE TABLE IF NOT EXISTS chats(
-                cours_id INTEGER, user_id INTEGER, messages TEXT,
-                PRIMARY KEY(cours_id, user_id));
-            """
-        )
-        c.commit()
-    finally:
-        c.close()
-    return True
-
-
-def init_db():
-    """Crée les tables une seule fois par démarrage du serveur."""
-    return _creer_base(DB_PATH)
-
-
-def hacher(mdp: str, sel: str) -> str:
-    return hashlib.pbkdf2_hmac("sha256", mdp.encode(), bytes.fromhex(sel), 200_000).hex()
-
-
-def creer_compte(nom: str, email: str, mdp: str):
-    email = email.strip().lower()
-    if len(nom.strip()) < 2:
-        return None, "Entre ton nom."
-    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
-        return None, "Adresse e-mail invalide."
-    if len(mdp) < 8:
-        return None, "Le mot de passe doit contenir au moins 8 caractères."
-    sel = secrets.token_hex(16)
-    try:
-        i = sql("INSERT INTO users(email,nom,sel,hash,cree) VALUES(?,?,?,?,?)",
-                (email, nom.strip(), sel, hacher(mdp, sel), maintenant()))
-    except sqlite3.IntegrityError:
-        return None, "Un compte existe déjà avec cet e-mail."
-    return {"id": i, "nom": nom.strip(), "email": email}, None
-
-
-def connecter(email: str, mdp: str):
-    u = sql("SELECT * FROM users WHERE email=?", (email.strip().lower(),), fetch="one")
-    if not u or not hmac.compare_digest(u["hash"], hacher(mdp, u["sel"])):
-        return None, "E-mail ou mot de passe incorrect."
-    return {"id": u["id"], "nom": u["nom"], "email": u["email"]}, None
-
-
-def uid():
-    u = st.session_state.get("user")
-    return u["id"] if u else None
+def nouvel_id() -> int:
+    s = stock()
+    s["seq"] += 1
+    return s["seq"]
 
 
 def enregistrer_cours(c: dict) -> int:
-    return sql("INSERT INTO cours(user_id,nom,texte,pdf,chapitres,cree) VALUES(?,?,?,?,?,?)",
-               (uid(), c["nom"], c["texte"], c.get("pdf"), json.dumps(c["chapitres"]), maintenant()))
+    i = nouvel_id()
+    c["id"] = i
+    c["cree"] = maintenant()
+    stock()["cours"][i] = c
+    return i
 
 
 def charger_cours(cid: int):
-    r = sql("SELECT * FROM cours WHERE id=? AND user_id=?", (cid, uid()), fetch="one")
-    if not r:
-        return None
-    return {"id": r["id"], "nom": r["nom"], "texte": r["texte"], "pdf": r["pdf"],
-            "chapitres": json.loads(r["chapitres"]), "vision": bool(r["pdf"]),
-            "pages": 0}
+    return stock()["cours"].get(cid)
 
 
 def supprimer_cours(cid: int):
-    sql("DELETE FROM tentatives WHERE qcm_id IN (SELECT id FROM qcms WHERE cours_id=? AND user_id=?)",
-        (cid, uid()))
-    for t in ("resumes", "qcms", "chats"):
-        sql(f"DELETE FROM {t} WHERE cours_id=? AND user_id=?", (cid, uid()))
-    sql("DELETE FROM cours WHERE id=? AND user_id=?", (cid, uid()))
+    s = stock()
+    ids_qcm = [i for i, q in s["qcms"].items() if q.get("cours_id") == cid]
+    s["tentatives"] = [t for t in s["tentatives"] if t["qcm_id"] not in ids_qcm]
+    for i in ids_qcm:
+        s["qcms"].pop(i, None)
+    for i in [i for i, r in s["resumes"].items() if r.get("cours_id") == cid]:
+        s["resumes"].pop(i, None)
+    s["chats"].pop(cid, None)
+    s["cours"].pop(cid, None)
 
 
 def charger_chat(cid):
-    if not (uid() and cid):
-        return []
-    r = sql("SELECT messages FROM chats WHERE cours_id=? AND user_id=?", (cid, uid()), fetch="one")
-    return json.loads(r["messages"]) if r else []
+    return list(stock()["chats"].get(cid, [])) if cid else []
 
 
 def sauver_chat(cid, msgs):
-    if uid() and cid:
-        sql("INSERT OR REPLACE INTO chats(cours_id,user_id,messages) VALUES(?,?,?)",
-            (cid, uid(), json.dumps(msgs)))
+    if cid:
+        stock()["chats"][cid] = list(msgs)
 
 
 # ----------------------------------------------------------------------------
@@ -699,16 +616,16 @@ def md_vers_html(md_texte: str, titre: str) -> str:
 <style>
 body{font-family:Georgia,'Times New Roman',serif;max-width:820px;margin:2rem auto;padding:0 1.2rem;
 line-height:1.65;color:#1F2937}
-h1{color:#4338CA;border-bottom:3px solid #4338CA;padding-bottom:.3rem}
-h2{color:#4338CA;margin-top:2.2rem;border-bottom:1px solid #E5E7EB;padding-bottom:.2rem;
+h1{color:#12306B;border-bottom:3px solid #12306B;padding-bottom:.3rem}
+h2{color:#12306B;margin-top:2.2rem;border-bottom:1px solid #E5E7EB;padding-bottom:.2rem;
 page-break-before:auto}
 h3{color:#374151;margin-top:1.4rem}
 table{border-collapse:collapse;margin:1rem 0}th,td{border:1px solid #D1D5DB;padding:.4rem .7rem}
-th{background:#EEF2FF}code{background:#F3F4F6;padding:.1rem .3rem;border-radius:4px}
+th{background:#EAF0FA}code{background:#F3F4F6;padding:.1rem .3rem;border-radius:4px}
 .note{color:#6B7280;font-size:.85rem;border-top:1px solid #E5E7EB;margin-top:3rem;padding-top:.6rem}
 @media print{body{margin:0;max-width:none}.noprint{display:none}h2{page-break-before:always}}
 </style></head><body>
-<p class="noprint" style="background:#EEF2FF;padding:.6rem 1rem;border-radius:8px;font-family:sans-serif">
+<p class="noprint" style="background:#EAF0FA;padding:.6rem 1rem;border-radius:8px;font-family:sans-serif">
 Pour obtenir un PDF : <b>Ctrl+P</b> (ou Partager → Imprimer) puis « Enregistrer au format PDF ».</p>
 __CORPS__
 <p class="note">Généré par Étudiants Learn · __DATE__</p></body></html>"""
@@ -839,7 +756,7 @@ def resume_en_docx(r: dict) -> bytes:
     doc.styles["Normal"].font.size = Pt(11)
     for nom in ("Heading 1", "Heading 2", "Heading 3", "Heading 4"):
         try:
-            doc.styles[nom].font.color.rgb = RGBColor(0x43, 0x38, 0xCA)
+            doc.styles[nom].font.color.rgb = RGBColor(0x12, 0x30, 0x6B)
         except Exception:
             pass
     t = doc.add_heading(r["titre"], level=0)
@@ -942,7 +859,7 @@ def _pdf_styles() -> dict:
     from reportlab.lib.enums import TA_CENTER
     from reportlab.lib.styles import ParagraphStyle
     p = _polices_pdf()
-    encre, accent = colors.HexColor("#1F2937"), colors.HexColor("#4338CA")
+    encre, accent = colors.HexColor("#1F2937"), colors.HexColor("#12306B")
     corps = ParagraphStyle("corps", fontName=p["normal"], fontSize=10, leading=15,
                            textColor=encre, spaceAfter=5)
     S = {
@@ -1007,7 +924,7 @@ def _md_vers_pdf(md_texte: str, ctx: dict, S: dict, largeur: float) -> list:
                 tab = Table(data, colWidths=[largeur / n] * n, repeatRows=1, hAlign="LEFT")
                 tab.setStyle(TableStyle([
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D1D5DB")),
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EEF2FF")),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EAF0FA")),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
                     ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5)]))
@@ -1079,7 +996,7 @@ def resume_en_pdf(r: dict) -> bytes:
                                 title=r["titre"], author=AUTEUR, subject="Fiche de révision")
         story = [_pdf_para(r["titre"], S["titre"], ctx),
                  _pdf_para(f"Fiche de révision ({r.get('niveau', '')}) · {r.get('cree', '')}", S["sous"], ctx),
-                 HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#4338CA"), spaceAfter=10)]
+                 HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#12306B"), spaceAfter=10)]
         story += _md_vers_pdf(r["apercu"], ctx, S, largeur)
         for s in r["sections"]:
             story += [PageBreak(), _pdf_para(s["titre"], S["h1"], ctx),
@@ -1219,71 +1136,102 @@ Explication: ..."""
     return resultat
 
 
-def sauver_qcm(titre, questions):
+def sauver_qcm(titre, questions) -> int:
     c = st.session_state.get("cours") or {}
-    if uid():
-        return sql("INSERT INTO qcms(user_id,cours_id,titre,data,cree) VALUES(?,?,?,?,?)",
-                   (uid(), c.get("id"), titre, json.dumps(questions), maintenant()))
-    return None
+    i = nouvel_id()
+    stock()["qcms"][i] = {"id": i, "cours_id": c.get("id"), "titre": titre,
+                          "questions": questions, "cree": maintenant()}
+    return i
 
 
 # ----------------------------------------------------------------------------
 # Interface : composants communs
 # ----------------------------------------------------------------------------
 def entete(titre, sous=""):
-    st.markdown(f'<div class="entete"><h1>{titre}</h1><p>{sous}</p></div>', unsafe_allow_html=True)
+    cours = st.session_state.get("cours")
+    chip = (f'<div class="chip">Cours actif : {html.escape(cours["nom"])}</div>'
+            if cours and titre != "Services & contact" else "")
+    st.markdown(f'<div class="banniere"><div class="fil">Accueil &nbsp;›&nbsp; {titre}</div>'
+                f'<h1>{titre}</h1><p>{sous}</p>{chip}</div>', unsafe_allow_html=True)
 
 
-def cle_api():
+def aller(page: str):
+    """Change de page (utilisé par les boutons de l'accueil)."""
+    st.session_state.nav = page
+
+
+def cle_api(afficher=True):
     cle = os.getenv("GEMINI_API_KEY")
     if not cle:
         try:
             cle = st.secrets.get("GEMINI_API_KEY")
         except Exception:
             cle = None
-    if not cle:
-        cle = st.text_input("Clé API Gemini", type="password",
-                            help="Ou définis la variable GEMINI_API_KEY (secrets Streamlit).")
+    if not cle and afficher:
+        with st.expander("Configuration : clé API Gemini requise", expanded=True):
+            cle = st.text_input("Clé API Gemini", type="password",
+                                help="Ou définis la variable GEMINI_API_KEY (secrets Streamlit).")
     return cle
 
 
 def pied():
+    liens = "".join(f"<li>{p}</li>" for p in PAGES)
     st.markdown(
-        f'''<div class="barre-pied">
-        <b>Étudiants Learn</b> · Conçu par {AUTEUR}<span class="sep">|</span>
-        <a href="mailto:{EMAIL}">{EMAIL}</a><span class="sep">|</span>
-        <a href="tel:{TEL_AMB[1]}">{TEL_AMB[0]}</a><span class="sep">|</span>
-        Répétitions : <a href="tel:{TEL_REP[1]}">{TEL_REP[0]}</a></div>''',
+        f'''<div class="pied-site"><div class="cols">
+        <div><h5>Étudiants Learn</h5>
+          <p>Plateforme d'aide à la réussite : résumés de cours, QCM corrigés et assistant pédagogique,
+          complétés par un accompagnement en traitement de données et en rédaction de mémoire.</p></div>
+        <div><h5>Navigation</h5><ul>{liens}</ul></div>
+        <div><h5>Contact</h5><ul>
+          <li><a href="mailto:{EMAIL}">{EMAIL}</a></li>
+          <li><a href="tel:{TEL_AMB[1]}">{TEL_AMB[0]}</a></li>
+          <li><a href="tel:{TEL_REP[1]}">{TEL_REP[0]}</a></li></ul></div>
+        </div>
+        <div class="copy">© {datetime.now().year} Étudiants Learn · Conçu par {AUTEUR}</div></div>''',
         unsafe_allow_html=True)
+
+
+def haut_de_page() -> str:
+    """Barre d'information, identité du site et menu principal."""
+    st.session_state.setdefault("nav", PAGES[0])
+    with st.container(key="top"):
+        st.markdown(
+            f'''<div class="topbar"><span>Plateforme d'aide à la réussite universitaire</span>
+            <span><a href="mailto:{EMAIL}">{EMAIL}</a><span class="sep">|</span>
+            <a href="tel:{TEL_AMB[1]}">{TEL_AMB[0]}</a></span></div>
+            <div class="entete-site"><span class="logo">EL</span><div>
+            <div class="nom">Étudiants Learn</div>
+            <div class="devise">Réviser · Comprendre · Réussir</div></div></div>''',
+            unsafe_allow_html=True)
+        with st.container(key="navbar"):
+            st.radio("Navigation", PAGES, horizontal=True, label_visibility="collapsed", key="nav")
+    return st.session_state.nav
 
 
 def boutons_contact(numero, message="Bonjour, je vous contacte depuis Étudiants Learn."):
     from urllib.parse import quote
     return (f'<a class="btn" href="tel:{numero[1]}">Appeler {numero[0]}</a>'
             f'<a class="btn wa" target="_blank" href="https://wa.me/{numero[1].lstrip("+")}?text={quote(message)}">'
-            f'WhatsApp</a>')
+            f'WhatsApp {numero[0]}</a>')
 
 
 ICONES = {
-    "livre": '<svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>',
-    "dossier": '<svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14l2 2 4-4"/></svg>',
     "graphique": '<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+    "memoire": '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
 }
 
 SERVICES = [
-    {"icone": "livre", "tag": "Accompagnement", "titre": "Répétitions",
-     "texte": "Un suivi sur mesure pour progresser et aborder vos examens avec confiance.",
-     "points": ["Soutien scolaire et universitaire", "Préparation aux examens et concours",
-                "Méthodes de travail et organisation"],
-     "contact": [TEL_REP[0]]},
-    {"icone": "dossier", "tag": "Administratif", "titre": "Démarches en ligne",
-     "texte": "Nous vous guidons dans vos demandes administratives, de la préparation du dossier à son dépôt.",
-     "points": ["Certificat de nationalité", "Passeport", "Casier judiciaire"],
-     "contact": [TEL_REP[0], TEL_AMB[0]]},
-    {"icone": "graphique", "tag": "Données", "titre": "Traitement de données",
-     "texte": "Des données propres, exploitables et clairement présentées.",
-     "points": ["Saisie et nettoyage", "Analyse et calculs", "Tableaux, graphiques et mise en forme"],
-     "contact": [TEL_REP[0], TEL_AMB[0]]},
+    {"icone": "graphique", "tag": "Données", "titre": "Traitement et analyse de données",
+     "texte": "Des données propres, correctement analysées et clairement présentées, "
+              "pour votre mémoire, vos travaux ou votre activité.",
+     "points": ["Saisie, nettoyage et codage des données", "Analyses statistiques et calculs",
+                "Tableaux, graphiques et mise en forme", "Interprétation et présentation des résultats"],
+     "contact": [TEL_AMB[0], TEL_REP[0]]},
+    {"icone": "memoire", "tag": "Académique", "titre": "Accompagnement à la rédaction de mémoire",
+     "texte": "Un accompagnement méthodologique, de l'idée de départ jusqu'à la soutenance.",
+     "points": ["Choix du sujet, problématique et plan", "Revue de littérature et méthodologie",
+                "Rédaction, mise en forme et références", "Préparation à la soutenance"],
+     "contact": [TEL_AMB[0], TEL_REP[0]]},
 ]
 
 
@@ -1293,8 +1241,7 @@ def bloc_services():
         pts = "".join(f"<li>{p}</li>" for p in s["points"])
         tels = " · ".join(s["contact"])
         cartes += (f'<div class="service"><div class="ico">{ICONES[s["icone"]]}</div>'
-                   f'<div class="tag" style="font-size:.68rem;font-weight:700;letter-spacing:.08em;'
-                   f'text-transform:uppercase;color:var(--accent);margin-bottom:.2rem">{s["tag"]}</div>'
+                   f'<div class="tag">{s["tag"]}</div>'
                    f'<h4>{s["titre"]}</h4><p>{s["texte"]}</p><ul>{pts}</ul>'
                    f'<div class="contact">Contact : <b>{tels}</b></div></div>')
     st.markdown(f'<div class="services">{cartes}</div>', unsafe_allow_html=True)
@@ -1302,28 +1249,28 @@ def bloc_services():
 
 def page_services():
     entete("Services & contact",
-           "Au-delà de l'application, nous vous accompagnons concrètement dans vos études et vos démarches.")
+           "Au-delà de l'application, nous vous accompagnons concrètement dans l'analyse de vos données "
+           "et la rédaction de votre mémoire.")
     bloc_services()
 
     st.markdown('<div class="section-titre">Comment ça se passe</div>', unsafe_allow_html=True)
     st.markdown(
         '''<div class="parcours">
         <div><b>1. Vous nous contactez</b><span>Par appel, WhatsApp ou e-mail, en décrivant votre besoin.</span></div>
-        <div><b>2. Nous cadrons la demande</b><span>Nous précisons ensemble les pièces, le délai et les modalités.</span></div>
+        <div><b>2. Nous cadrons la demande</b><span>Nous précisons ensemble les objectifs, le délai et les modalités.</span></div>
         <div><b>3. Nous vous accompagnons</b><span>Nous réalisons la mission et restons disponibles jusqu'à son terme.</span></div>
         </div>''', unsafe_allow_html=True)
 
     st.markdown('<div class="section-titre">Nous contacter</div>', unsafe_allow_html=True)
-    st.markdown("**Répétitions**")
-    st.markdown(boutons_contact(TEL_REP, "Bonjour, je souhaite des informations sur les répétitions."),
-                unsafe_allow_html=True)
-    st.markdown("**Démarches en ligne et traitement de données**")
-    msg = "Bonjour, je souhaite être accompagné(e) pour une démarche ou un traitement de données."
-    st.markdown(boutons_contact(TEL_REP, msg) + boutons_contact(TEL_AMB, msg), unsafe_allow_html=True)
+    st.markdown("**Traitement et analyse de données**")
+    msg = "Bonjour, je souhaite être accompagné(e) pour le traitement et l'analyse de mes données."
+    st.markdown(boutons_contact(TEL_AMB, msg) + boutons_contact(TEL_REP, msg), unsafe_allow_html=True)
+    st.markdown("**Accompagnement à la rédaction de mémoire**")
+    msg = "Bonjour, je souhaite être accompagné(e) pour la rédaction de mon mémoire."
+    st.markdown(boutons_contact(TEL_AMB, msg) + boutons_contact(TEL_REP, msg), unsafe_allow_html=True)
     st.markdown("**Par e-mail**")
     st.markdown(f'<a class="btn clair" href="mailto:{EMAIL}">{EMAIL}</a>', unsafe_allow_html=True)
-    st.caption("Service d'accompagnement privé, non affilié à l'administration. "
-               "Les délais et les décisions relèvent des services officiels.")
+    st.caption("Accompagnement méthodologique : le mémoire reste votre travail personnel.")
 
 
 def etapes():
@@ -1353,58 +1300,48 @@ def reset_travail(cours):
 # ----------------------------------------------------------------------------
 # Pages
 # ----------------------------------------------------------------------------
-def page_connexion():
-    # Pas de barre latérale avant la connexion
-    st.markdown("<style>[data-testid='stSidebar'], [data-testid='collapsedControl'], "
-                "[data-testid='stSidebarCollapsedControl'] { display:none; }</style>",
-                unsafe_allow_html=True)
-    gauche, droite = st.columns([1.15, 1], gap="large")
-    with gauche:
-        st.markdown(
-            '''<div class="marque-lg"><span class="logo">EL</span><b>Étudiants Learn</b></div>
-            <div class="titre-accueil">Révisez plus vite, à partir de vos propres cours.</div>
-            <p class="sous-accueil">Importez un cours au format PDF ou Word et obtenez des fiches de révision
-            structurées, des QCM corrigés et un assistant qui répond à vos questions.</p>
-            <ul class="atouts">
-              <li><i class="pt"></i><div><b>Résumés approfondis</b>
-                <span>Une fiche par chapitre : définitions, formules, démonstrations et exemples.
-                Export PDF, Word et Markdown.</span></div></li>
-              <li><i class="pt"></i><div><b>QCM jusqu'à 100 questions</b>
-                <span>Sur tout le cours ou par chapitre, avec correction détaillée et note sur 20.</span></div></li>
-              <li><i class="pt"></i><div><b>Assistant pédagogique</b>
-                <span>Explications pas à pas, exercices corrigés, conseils pour l'examen.</span></div></li>
-              <li><i class="pt"></i><div><b>Formules mathématiques</b>
-                <span>Rendu LaTeX soigné, dans l'application comme dans les exports.</span></div></li>
-            </ul>''', unsafe_allow_html=True)
-    with droite:
-        st.markdown('<div class="acces-titre">Accéder à votre espace</div>'
-                    '<div class="acces-sous">Connectez-vous ou créez un compte pour sauvegarder vos cours, '
-                    'résumés et résultats.</div>', unsafe_allow_html=True)
-        t1, t2 = st.tabs(["Connexion", "Créer un compte"])
-        with t1:
-            with st.form("login"):
-                email = st.text_input("Adresse e-mail")
-                mdp = st.text_input("Mot de passe", type="password")
-                if st.form_submit_button("Se connecter", type="primary", use_container_width=True):
-                    u, err = connecter(email, mdp)
-                    if err:
-                        st.error(err)
-                    else:
-                        st.session_state.user = u
-                        st.rerun()
-        with t2:
-            with st.form("signup"):
-                nom = st.text_input("Nom complet")
-                email = st.text_input("Adresse e-mail", key="se")
-                mdp = st.text_input("Mot de passe (8 caractères minimum)", type="password", key="sm")
-                if st.form_submit_button("Créer mon compte", type="primary", use_container_width=True):
-                    u, err = creer_compte(nom, email, mdp)
-                    if err:
-                        st.error(err)
-                    else:
-                        st.session_state.user = u
-                        st.rerun()
-    pied()
+def page_accueil():
+    st.markdown(
+        '''<div class="hero"><div class="kicker">Plateforme d'aide à la réussite</div>
+        <h1>Réussissez vos études à partir de vos propres cours</h1>
+        <p>Importez un cours au format PDF ou Word : obtenez une fiche de révision approfondie, des QCM
+        corrigés et un assistant qui répond à vos questions. Sans inscription.</p></div>''',
+        unsafe_allow_html=True)
+    b1, b2, _ = st.columns([1.2, 1.2, 3])
+    b1.button("Charger mon cours", type="primary", use_container_width=True, on_click=aller, args=("Mon cours",))
+    b2.button("Nos services", use_container_width=True, on_click=aller, args=("Services & contact",))
+
+    st.markdown(
+        f'''<div class="chiffres">
+        <div><b>{MAX_QCM}</b><span>questions par QCM</span></div>
+        <div><b>{len(NIVEAUX)}</b><span>niveaux de résumé</span></div>
+        <div><b>4</b><span>formats d'export</span></div>
+        <div><b>24h/24</b><span>assistant disponible</span></div></div>''',
+        unsafe_allow_html=True)
+
+    st.markdown('<div class="section-titre">Les outils de révision</div>', unsafe_allow_html=True)
+    st.markdown(
+        '''<div class="cartes">
+        <div class="carte"><div class="tag">Résumé</div><h4>Fiches approfondies</h4>
+          <p>Une fiche par chapitre : définitions, formules, démonstrations, exemples résolus et pièges.</p></div>
+        <div class="carte"><div class="tag">Évaluation</div><h4>QCM corrigés</h4>
+          <p>Sur tout le cours ou par chapitre, avec correction détaillée, note sur 20 et révision des erreurs.</p></div>
+        <div class="carte"><div class="tag">Tutorat</div><h4>Assistant pédagogique</h4>
+          <p>Explications pas à pas, exercices corrigés et conseils pour préparer vos examens.</p></div>
+        <div class="carte"><div class="tag">Export</div><h4>PDF, Word, HTML, Markdown</h4>
+          <p>Vos fiches téléchargeables, formules mathématiques comprises, pour réviser hors ligne.</p></div>
+        </div>''', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-titre">Comment ça marche</div>', unsafe_allow_html=True)
+    st.markdown(
+        '''<div class="parcours">
+        <div><b>1. Déposez votre cours</b><span>PDF ou document Word : il est lu en entier et découpé en chapitres.</span></div>
+        <div><b>2. Choisissez votre outil</b><span>Résumé, QCM ou questions à l'assistant, chapitre par chapitre.</span></div>
+        <div><b>3. Révisez et exportez</b><span>Téléchargez vos fiches et refaites vos QCM jusqu'à maîtriser le sujet.</span></div>
+        </div>''', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-titre">Accompagnement académique</div>', unsafe_allow_html=True)
+    bloc_services()
 
 
 def page_cours(cle):
@@ -1425,9 +1362,7 @@ def page_cours(cle):
                         st.write("Attention : cours très long, seule la partie initiale sera exploitée en mode texte.")
                     st.write("Détection des chapitres…")
                     cours["chapitres"] = detecter_chapitres(cours, cle)
-                    if uid():
-                        st.write("Enregistrement dans ta bibliothèque…")
-                        cours["id"] = enregistrer_cours(cours)
+                    enregistrer_cours(cours)
                     reset_travail(cours)
                     s.update(label=f"Cours prêt — {len(cours['chapitres'])} chapitre(s)", state="complete")
             except Exception as e:
@@ -1449,16 +1384,14 @@ def page_cours(cle):
             for i, c in enumerate(cours["chapitres"], 1):
                 st.markdown(f"**{i}. {c['titre']}**" + (f" — {c['desc']}" if c["desc"] else ""))
 
-    if uid():
+    lst = sorted(stock()["cours"].values(), key=lambda c: c["id"], reverse=True)
+    if lst:
         st.divider()
-        st.subheader("Ma bibliothèque")
-        lst = sql("SELECT id, nom, cree FROM cours WHERE user_id=? ORDER BY id DESC", (uid(),), fetch="all")
-        if not lst:
-            st.caption("Aucun cours enregistré pour l'instant.")
+        st.subheader("Mes cours (cette session)")
         for c in lst:
             with st.container(border=True):
                 a, b, d = st.columns([5, 1.3, 1.5])
-                a.markdown(f"**{c['nom']}**  \n<small>{c['cree']}</small>", unsafe_allow_html=True)
+                a.markdown(f"**{html.escape(c['nom'])}**  \n<small>{c['cree']}</small>", unsafe_allow_html=True)
                 if b.button("Ouvrir", key=f"o{c['id']}", use_container_width=True):
                     reset_travail(charger_cours(c["id"]))
                     st.rerun()
@@ -1540,9 +1473,9 @@ def page_resume(cle):
             try:
                 r = generer_resume(cours, cibles, niveau, cle,
                                    lambda p, t: barre.progress(min(p, 1.0), text=t))
-                if uid():
-                    r["id"] = sql("INSERT INTO resumes(user_id,cours_id,titre,contenu,cree) VALUES(?,?,?,?,?)",
-                                  (uid(), cours.get("id"), r["titre"], json.dumps(r), maintenant()))
+                r["id"] = nouvel_id()
+                r["cours_id"] = cours.get("id")
+                stock()["resumes"][r["id"]] = r
                 st.session_state.resume = r
                 barre.empty()
                 if r["echecs"]:
@@ -1625,9 +1558,10 @@ def page_qcm(cle):
             reps = [st.session_state.get(f"q{v}_{i}") for i in range(len(qs))]
             st.session_state.reponses = reps
             st.session_state.valide = True
-            if uid() and qcm.get("id"):
-                sql("INSERT INTO tentatives(user_id,qcm_id,score,total,cree) VALUES(?,?,?,?,?)",
-                    (uid(), qcm["id"], sum(r == q["r"] for r, q in zip(reps, qs)), len(qs), maintenant()))
+            if qcm.get("id"):
+                stock()["tentatives"].append(
+                    {"qcm_id": qcm["id"], "score": sum(r == q["r"] for r, q in zip(reps, qs)),
+                     "total": len(qs), "cree": maintenant()})
             st.rerun()
         return
 
@@ -1730,103 +1664,73 @@ def page_chat(cle):
 
 
 def page_historique():
-    entete("Historique", "Retrouvez vos résumés, vos QCM et vos résultats.")
-    if not uid():
-        st.info("Connecte-toi pour consulter ton historique.")
-        return
+    entete("Historique", "Retrouvez les résumés, QCM et résultats de cette session.")
+    st.caption("L'historique est conservé tant que cette page reste ouverte : téléchargez vos fiches "
+               "pour les garder durablement.")
+    s = stock()
     t1, t2 = st.tabs(["Résumés", "QCM et notes"])
     with t1:
-        lst = sql("SELECT id, titre, cree FROM resumes WHERE user_id=? ORDER BY id DESC", (uid(),), fetch="all")
+        lst = sorted(s["resumes"].values(), key=lambda r: r["id"], reverse=True)
         if not lst:
-            st.caption("Aucun résumé enregistré.")
+            st.caption("Aucun résumé pour l'instant.")
         for r in lst:
             with st.container(border=True):
                 a, b, c = st.columns([5, 1.3, 1.5])
-                a.markdown(f"**{r['titre']}**  \n<small>{r['cree']}</small>", unsafe_allow_html=True)
+                a.markdown(f"**{html.escape(r['titre'])}**  \n<small>{r['cree']}</small>", unsafe_allow_html=True)
                 if b.button("Ouvrir", key=f"hr{r['id']}", use_container_width=True):
-                    row = sql("SELECT contenu FROM resumes WHERE id=? AND user_id=?", (r["id"], uid()), fetch="one")
-                    d = json.loads(row["contenu"])
-                    d["id"] = r["id"]
-                    st.session_state.resume = d
+                    st.session_state.resume = r
                     st.success("Résumé chargé : ouvre l'onglet **Résumé**.")
                 if c.button("Supprimer", key=f"dr{r['id']}", use_container_width=True):
-                    sql("DELETE FROM resumes WHERE id=? AND user_id=?", (r["id"], uid()))
+                    s["resumes"].pop(r["id"], None)
+                    if (st.session_state.get("resume") or {}).get("id") == r["id"]:
+                        st.session_state.resume = None
                     st.rerun()
     with t2:
-        lst = sql("""SELECT q.id, q.titre, q.cree, COUNT(t.id) AS essais,
-                     MAX(CAST(t.score AS REAL) / t.total * 20) AS meilleure
-                     FROM qcms q LEFT JOIN tentatives t ON t.qcm_id = q.id
-                     WHERE q.user_id=? GROUP BY q.id ORDER BY q.id DESC""", (uid(),), fetch="all")
+        lst = sorted(s["qcms"].values(), key=lambda q: q["id"], reverse=True)
         if not lst:
-            st.caption("Aucun QCM enregistré.")
+            st.caption("Aucun QCM pour l'instant.")
         for q in lst:
+            essais = [t for t in s["tentatives"] if t["qcm_id"] == q["id"]]
+            meilleure = max((t["score"] / t["total"] * 20 for t in essais if t["total"]), default=None)
+            bilan = f"meilleure note {round(meilleure, 1)}/20" if meilleure is not None else "pas encore tenté"
             with st.container(border=True):
                 a, b, c = st.columns([5, 1.3, 1.5])
-                meilleure = (f"meilleure note {round(q['meilleure'], 1)}/20"
-                             if q["meilleure"] is not None else "pas encore tenté")
-                a.markdown(f"**{q['titre']}**  \n<small>{q['cree']} · {q['essais']} essai(s) · {meilleure}</small>",
+                a.markdown(f"**{html.escape(q['titre'])}**  \n<small>{q['cree']} · {len(essais)} essai(s) · {bilan}</small>",
                            unsafe_allow_html=True)
                 if b.button("Refaire", key=f"hq{q['id']}", use_container_width=True):
-                    row = sql("SELECT data FROM qcms WHERE id=? AND user_id=?", (q["id"], uid()), fetch="one")
-                    st.session_state.qcm = {"id": q["id"], "titre": q["titre"], "questions": json.loads(row["data"])}
+                    st.session_state.qcm = {"id": q["id"], "titre": q["titre"], "questions": q["questions"]}
                     st.session_state.valide = False
                     st.session_state.version = st.session_state.get("version", 0) + 1
                     st.success("QCM chargé : ouvre l'onglet **QCM**.")
                 if c.button("Supprimer", key=f"dq{q['id']}", use_container_width=True):
-                    sql("DELETE FROM tentatives WHERE qcm_id=? AND user_id=?", (q["id"], uid()))
-                    sql("DELETE FROM qcms WHERE id=? AND user_id=?", (q["id"], uid()))
+                    s["tentatives"] = [t for t in s["tentatives"] if t["qcm_id"] != q["id"]]
+                    s["qcms"].pop(q["id"], None)
                     st.rerun()
-
-
-# ----------------------------------------------------------------------------
-# Application
-# ----------------------------------------------------------------------------
-init_db()
-
-# Accès réservé aux comptes : pas de mode invité
-if not st.session_state.get("user") or not st.session_state.user.get("id"):
-    st.session_state.pop("user", None)
-    page_connexion()
-    st.stop()
-
-with st.sidebar:
-    utilisateur = st.session_state.user
-    initiale = html.escape((utilisateur["nom"].strip()[:1] or "?").upper())
-    st.markdown('<div class="marque"><span class="logo">EL</span><b>Étudiants Learn</b></div>',
-                unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="profil"><span class="av">{initiale}</span><div>'
-        f'<div class="n">{html.escape(utilisateur["nom"])}</div>'
-        f'<div class="e">{html.escape(utilisateur.get("email", ""))}</div></div></div>',
-        unsafe_allow_html=True)
-    page = st.radio("Navigation", PAGES, label_visibility="collapsed", key="nav")
     st.divider()
-    if st.session_state.get("cours"):
-        st.markdown(
-            f'<div class="cours-actif"><span>COURS ACTIF</span>'
-            f'<b>{html.escape(st.session_state.cours["nom"])}</b></div>', unsafe_allow_html=True)
-    cle = cle_api()
-    st.markdown(
-        f'''<div class="promo"><b>Besoin d'un coup de main ?</b><br>
-        Répétitions : {TEL_REP[0]}<br>
-        Démarches et données : {TEL_AMB[0]}<br>
-        <span style="font-size:.72rem">Détails dans l'onglet « Services & contact ».</span></div>''',
-        unsafe_allow_html=True)
-    st.write("")
-    if st.button("Se déconnecter", use_container_width=True):
+    if st.button("Nouvelle session", help="Efface les cours, résumés et QCM de cette session."):
         for k in list(st.session_state.keys()):
-            del st.session_state[k]
+            if k not in ("seo_ok", "nav"):
+                del st.session_state[k]
         st.rerun()
 
-if page == PAGES[0]:
+
+# ----------------------------------------------------------------------------
+# Application (accès direct, sans connexion)
+# ----------------------------------------------------------------------------
+page = haut_de_page()
+cle = cle_api(afficher=page in ("Mon cours", "Résumé", "QCM", "Assistant"))
+
+if page == "Accueil":
+    page_accueil()
+elif page == "Mon cours":
     page_cours(cle)
-elif page == PAGES[1]:
+elif page == "Résumé":
     page_resume(cle)
-elif page == PAGES[2]:
+elif page == "QCM":
     page_qcm(cle)
-elif page == PAGES[3]:
+elif page == "Assistant":
     page_chat(cle)
-elif page == PAGES[4]:
+elif page == "Historique":
     page_historique()
 else:
     page_services()
