@@ -1,205 +1,233 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Étudiants Learn – Résumés de cours, QCM et assistant IA</title>
-<meta name="description" content="Étudiants Learn aide les étudiants à réviser leurs cours PDF ou Word grâce à des résumés approfondis, des QCM corrigés jusqu'à 100 questions et un assistant IA pour préparer les examens.">
-<meta name="keywords" content="Étudiants Learn, révision étudiants, résumé de cours IA, QCM en ligne, quiz, assistant IA étudiant, préparation examens, cours PDF, cours Word">
+<meta name="description" content="Étudiants Learn aide les étudiants à réviser leurs cours PDF ou Word grâce à des résumés approfondis, des QCM corrigés jusqu'à 100 questions et un assistant IA. Accompagnement en traitement de données et en rédaction de mémoire.">
+<meta name="keywords" content="Étudiants Learn, révision étudiants, résumé de cours IA, QCM en ligne, assistant IA étudiant, traitement de données, analyse de données, rédaction de mémoire, Togo">
 <meta name="author" content="BOKOUMBO Tibetobe Ambroise">
 <meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#12306B">
 <link rel="canonical" href="https://ambroisebok-glitch.github.io/analyse-statistique-excel/">
 <meta property="og:type" content="website">
-<meta property="og:locale" content="fr_FR">
 <meta property="og:site_name" content="Étudiants Learn">
+<meta property="og:locale" content="fr_FR">
 <meta property="og:title" content="Étudiants Learn – Révise tes cours avec l'intelligence artificielle">
 <meta property="og:description" content="Transforme tes cours PDF ou Word en résumés approfondis, QCM corrigés et pose tes questions à un assistant IA.">
 <meta property="og:url" content="https://ambroisebok-glitch.github.io/analyse-statistique-excel/">
 <meta name="twitter:card" content="summary">
-<meta name="theme-color" content="#4338CA">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebApplication",
-      "name": "Étudiants Learn",
-      "url": "https://etudiantslearn.streamlit.app/",
-      "description": "Plateforme de révision qui transforme les cours PDF ou Word en résumés approfondis, QCM corrigés et réponses grâce à un assistant IA.",
-      "applicationCategory": "EducationalApplication",
-      "operatingSystem": "Web",
-      "inLanguage": "fr",
-      "author": {
-        "@type": "Person",
-        "name": "BOKOUMBO Tibetobe Ambroise"
-      }
-    },
-    {
-      "@type": "WebSite",
-      "name": "Étudiants Learn",
-      "url": "https://ambroisebok-glitch.github.io/analyse-statistique-excel/",
-      "inLanguage": "fr"
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Qu'est-ce qu'Étudiants Learn ?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Étudiants Learn est une plateforme qui aide les étudiants à réviser leurs cours PDF ou Word grâce à des résumés approfondis, des QCM corrigés et un assistant IA."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Combien de questions peut contenir un QCM ?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "La plateforme permet de préparer des QCM pouvant aller jusqu'à 100 questions, selon les fonctionnalités disponibles."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Peut-on télécharger les résumés ?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Les résumés peuvent être exportés dans les formats proposés par l'application, notamment Word et HTML imprimable en PDF."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Comment accéder à Étudiants Learn ?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "La plateforme est accessible en ligne à l'adresse https://etudiantslearn.streamlit.app/."
-          }
-        }
-      ]
-    }
-  ]
-}
+{"@context":"https://schema.org","@graph":[
+{"@type":"WebApplication","name":"Étudiants Learn","url":"https://etudiantslearn.streamlit.app/","applicationCategory":"EducationalApplication","operatingSystem":"Web","inLanguage":"fr","author":{"@type":"Person","name":"BOKOUMBO Tibetobe Ambroise","email":"ambroisebok@gmail.com","telephone":"+22891942948"}},
+{"@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Faut-il créer un compte ?","acceptedAnswer":{"@type":"Answer","text":"Non. L'application s'utilise directement, sans inscription."}},
+{"@type":"Question","name":"Quels documents puis-je utiliser ?","acceptedAnswer":{"@type":"Answer","text":"Des cours au format PDF ou Word (.docx)."}},
+{"@type":"Question","name":"Combien de questions peut contenir un QCM ?","acceptedAnswer":{"@type":"Answer","text":"Jusqu'à 100 questions, sur tout le cours ou chapitre par chapitre."}}]}]}
 </script>
-
 <style>
-:root{--v:#4F46E5;--vf:#4338CA;--n:#1E1B4B;--g:#4B5563;--bg:#F8F9FF}
+:root{--navy:#12306B;--navy-d:#0B2147;--gold:#C9A227;--ink:#1B2433;--muted:#5F6B7F;--line:#DDE3EC;
+--soft:#F3F6FB;--serif:'Playfair Display',Georgia,'Times New Roman',serif}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1F2937;background:#fff;line-height:1.6}
-a{color:var(--v)}
-header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid #E5E7EB}
-.nav{max-width:1080px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.2rem;gap:1rem}
-.logo{display:flex;align-items:center;gap:.6rem;font-weight:800;font-size:1.2rem;color:var(--n);text-decoration:none}
-.logo span{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#4F46E5,#7C3AED)}
-nav a{margin-left:1.1rem;text-decoration:none;color:var(--g);font-weight:500;font-size:.95rem}
-nav a:hover{color:var(--v)}
-.btn{display:inline-block;padding:.8rem 1.4rem;border-radius:12px;font-weight:700;text-decoration:none;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;box-shadow:0 6px 16px rgba(79,70,229,.3);transition:transform .15s}
-.btn:hover{transform:translateY(-2px)}
-.btn.clair{background:#fff;color:var(--vf);box-shadow:none;border:1px solid #C7D2FE}
-.hero{background:linear-gradient(135deg,#4338CA,#7C3AED 60%,#A855F7);color:#fff;text-align:center;padding:4.5rem 1.2rem 5rem}
-.hero h1{font-size:clamp(2rem,5vw,3.2rem);margin:0 auto .8rem;max-width:850px;line-height:1.15;letter-spacing:-.02em}
-.hero p{max-width:700px;margin:0 auto 1.8rem;color:#E0E7FF;font-size:1.15rem}
-.hero .btn{background:#fff;color:var(--vf);box-shadow:0 8px 24px rgba(0,0,0,.2)}
-.hero .btn.clair{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);box-shadow:none}
-section{max-width:1080px;margin:auto;padding:3.5rem 1.2rem}
-h2{font-size:1.9rem;color:var(--n);margin:0 0 .4rem;letter-spacing:-.02em}
-.sous{color:var(--g);margin:0 0 2rem}
-.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.1rem}
-.carte{border:1px solid #E5E7EB;border-radius:18px;padding:1.4rem;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:transform .15s,box-shadow .15s}
-.carte:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(79,70,229,.13)}
-.ico{width:50px;height:50px;border-radius:14px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin-bottom:.8rem}
-.carte h3{margin:.1rem 0 .4rem;color:var(--n);font-size:1.12rem}
-.carte p{margin:0;color:var(--g);font-size:.95rem}
-.fond{background:var(--bg);max-width:none}
-.fond>div{max-width:1080px;margin:auto}
-.etapes{counter-reset:e;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.1rem}
-.etapes div{position:relative;background:#fff;border:1px solid #E5E7EB;border-radius:18px;padding:1.4rem 1.4rem 1.4rem 4rem}
-.etapes div::before{counter-increment:e;content:counter(e);position:absolute;left:1.1rem;top:1.3rem;width:34px;height:34px;border-radius:50%;background:var(--v);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
-.etapes b{color:var(--n)}
-.etapes p{margin:.2rem 0 0;color:var(--g);font-size:.93rem}
-.contact{background:linear-gradient(135deg,#1E1B4B,#312E81);color:#E0E7FF;max-width:none;text-align:center}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{margin:0;font-family:'Inter',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);line-height:1.6;background:#fff}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 1.4rem}
+h1,h2,h3{font-family:var(--serif);color:var(--navy-d);line-height:1.15;margin:0}
+
+/* En-tête */
+.topbar{background:var(--navy-d);color:#C3D0E8;font-size:.78rem}
+.topbar .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.2rem 1.5rem;padding-top:.5rem;padding-bottom:.5rem}
+.topbar a{color:#fff;text-decoration:none;font-weight:500}
+.topbar a:hover{text-decoration:underline}
+header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-top:.8rem;padding-bottom:.8rem}
+.brand{display:flex;align-items:center;gap:.8rem;text-decoration:none}
+.logo{width:46px;height:46px;border-radius:50%;background:var(--navy);color:var(--gold);border:3px solid var(--gold);
+display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:1rem;flex:0 0 46px}
+.brand b{display:block;font-family:var(--serif);font-size:1.4rem;color:var(--navy-d);line-height:1.1}
+.brand small{display:block;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+nav{display:flex;align-items:center;gap:1.6rem}
+nav a.lien{text-decoration:none;font-size:.92rem;font-weight:500;color:#334155;padding:.3rem 0;border-bottom:2px solid transparent}
+nav a.lien:hover{color:var(--navy);border-bottom-color:var(--gold)}
+.btn{display:inline-block;padding:.75rem 1.3rem;border-radius:4px;font-weight:600;font-size:.95rem;text-decoration:none;
+background:var(--navy);color:#fff;border:2px solid var(--navy);transition:background .15s}
+.btn:hover{background:var(--navy-d)}
+.btn.or{background:var(--gold);border-color:var(--gold);color:var(--navy-d)}
+.btn.or:hover{background:#B8921F}
+.btn.contour{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
+.btn.contour:hover{background:rgba(255,255,255,.12)}
+.btn.petit{padding:.55rem 1rem;font-size:.88rem}
+
+/* Bannière */
+.hero{position:relative;overflow:hidden;color:#fff;border-bottom:4px solid var(--gold);
+background:linear-gradient(115deg,var(--navy-d) 0%,var(--navy) 60%,#1F4C9A 100%)}
+.hero::after{content:"∑  π  ∫  Δ  ∞";position:absolute;right:1.5rem;bottom:-1.6rem;font-family:Georgia,serif;font-size:8rem;color:rgba(255,255,255,.06);white-space:nowrap}
+.hero .wrap{position:relative;z-index:1;padding-top:5rem;padding-bottom:4.6rem}
+.kicker{text-transform:uppercase;letter-spacing:.16em;font-size:.76rem;color:var(--gold);font-weight:700;margin-bottom:1rem}
+.hero h1{color:#fff;font-size:clamp(2.1rem,5vw,3.4rem);max-width:800px}
+.hero p{color:#D5DFF1;font-size:1.12rem;max-width:620px;margin:1.2rem 0 2rem}
+.hero .actions{display:flex;flex-wrap:wrap;gap:.8rem}
+
+/* Chiffres */
+.chiffres{background:#fff;border-bottom:1px solid var(--line)}
+.chiffres .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.chiffres div{padding:1.5rem 1rem;text-align:center;border-right:1px solid var(--line)}
+.chiffres div:last-child{border-right:none}
+.chiffres b{display:block;font-family:var(--serif);font-size:2.1rem;color:var(--navy);line-height:1.1}
+.chiffres span{font-size:.82rem;color:var(--muted)}
+
+/* Sections */
+section{padding:4.2rem 0}
+section.gris{background:var(--soft)}
+.titre{margin-bottom:2.2rem}
+.titre h2{font-size:clamp(1.7rem,3.4vw,2.3rem);padding-bottom:.7rem;position:relative}
+.titre h2::after{content:"";position:absolute;left:0;bottom:0;width:60px;height:3px;background:var(--gold)}
+.titre p{color:var(--muted);margin:.9rem 0 0;max-width:640px}
+.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.3rem}
+.carte{background:#fff;border:1px solid var(--line);border-top:3px solid var(--navy);border-radius:4px;padding:1.5rem;
+transition:box-shadow .2s,transform .2s}
+.carte:hover{box-shadow:0 12px 28px rgba(11,33,71,.1);transform:translateY(-2px)}
+.carte.dore{border-top-color:var(--gold)}
+.tag{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem}
+.carte h3{font-size:1.25rem;margin-bottom:.5rem}
+.carte p{margin:0;color:#4A566A;font-size:.93rem}
+.carte ul{list-style:none;padding:0;margin:1rem 0 0;display:grid;gap:.45rem}
+.carte li{font-size:.9rem;color:#334155;padding-left:1.15rem;position:relative}
+.carte li::before{content:"";position:absolute;left:0;top:.55em;width:6px;height:6px;background:var(--gold);transform:rotate(45deg)}
+
+/* Étapes */
+.etapes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.3rem}
+.etape{background:#fff;border-left:3px solid var(--gold);padding:1.2rem 1.3rem;border-radius:0 4px 4px 0;box-shadow:0 1px 0 var(--line)}
+.etape i{font-style:normal;font-family:var(--serif);font-size:2rem;color:var(--gold);line-height:1}
+.etape h3{font-size:1.15rem;margin:.3rem 0 .3rem}
+.etape p{margin:0;color:#4A566A;font-size:.92rem}
+
+/* FAQ */
+.faq{max-width:820px}
+details{background:#fff;border:1px solid var(--line);border-radius:4px;margin-bottom:.7rem}
+summary{cursor:pointer;padding:1rem 1.2rem;font-weight:600;color:var(--navy-d);list-style:none;display:flex;justify-content:space-between;gap:1rem}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--gold);font-size:1.4rem;line-height:1}
+details[open] summary::after{content:"–"}
+details p{margin:0;padding:0 1.2rem 1.1rem;color:#4A566A;font-size:.94rem}
+
+/* Contact */
+.contact{background:linear-gradient(115deg,var(--navy-d),var(--navy));color:#fff;border-top:4px solid var(--gold)}
 .contact h2{color:#fff}
-.contact .sous{color:#C7D2FE}
-.contact a.t{color:#FDE68A;font-weight:700;text-decoration:none}
-.contact p{max-width:680px;margin:.5rem auto}
-details{border:1px solid #E5E7EB;border-radius:14px;padding:1rem 1.2rem;margin-bottom:.7rem;background:#fff}
-summary{cursor:pointer;font-weight:600;color:var(--n)}
-details p{margin:.6rem 0 0;color:var(--g)}
-footer{background:#0F0D2E;color:#A5B4FC;text-align:center;padding:1.6rem 1rem;font-size:.9rem}
-footer a{color:#fff;text-decoration:none;font-weight:600}
-.note{font-size:.8rem;color:#A5B4FC;margin-top:1rem}
-@media(max-width:640px){nav{display:none}.hero{padding:3.5rem 1rem}}
+.contact .titre p{color:#C9D5EC}
+.coord{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.3rem;margin-bottom:2rem}
+.coord div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:4px;padding:1.2rem 1.3rem}
+.coord small{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.3rem}
+.coord a{text-decoration:none;font-weight:500;word-break:break-word}
+.coord a:hover{text-decoration:underline}
+.coord .wa-l{display:block;margin-top:.35rem;font-size:.85rem;color:#9FE0B5}
+
+footer{background:var(--navy-d);color:#8FA2C4;font-size:.8rem;text-align:center;padding:1.3rem 1rem}
+footer a{color:#E2E8F5}
+
+@media(max-width:860px){nav a.lien{display:none}.topbar .wrap>span:first-child{display:none}.hero .wrap{padding-top:3.4rem;padding-bottom:3.2rem}}
+@media(max-width:520px){.brand small{display:none}.btn.petit{padding:.5rem .8rem}}
 </style>
 </head>
 <body>
-<header>
-  <div class="nav">
-    <a class="logo" href="#"><span>🎓</span>Étudiants Learn</a>
-    <nav>
-      <a href="#fonctions">Fonctionnalités</a>
-      <a href="#comment">Comment ça marche</a>
-      <a href="#faq">FAQ</a>
-      <a href="#contact">Contact</a>
-    </nav>
-    <a class="btn" href="https://etudiantslearn.streamlit.app/" style="padding:.55rem 1.1rem">Ouvrir l'application</a>
-  </div>
-</header>
+
+<div class="topbar"><div class="wrap">
+  <span>Plateforme d’aide à la réussite universitaire</span>
+  <span><a href="mailto:ambroisebok@gmail.com">ambroisebok@gmail.com</a> &nbsp;|&nbsp; <a href="tel:+22891942948">+228 91 94 29 48</a></span>
+</div></div>
+
+<header><div class="wrap">
+  <a class="brand" href="#"><span class="logo">EL</span><span><b>Étudiants Learn</b><small>Réviser · Comprendre · Réussir</small></span></a>
+  <nav>
+    <a class="lien" href="#fonctions">Fonctionnalités</a>
+    <a class="lien" href="#comment">Comment ça marche</a>
+    <a class="lien" href="#services">Services</a>
+    <a class="lien" href="#faq">FAQ</a>
+    <a class="lien" href="#contact">Contact</a>
+    <a class="btn petit" href="https://etudiantslearn.streamlit.app/">Ouvrir l’application</a>
+  </nav>
+</div></header>
 
 <main>
-  <div class="hero">
-    <h1>Révise tes cours plus efficacement avec l'intelligence artificielle</h1>
-    <p>Dépose ton cours en PDF ou Word : obtiens des résumés approfondis, des QCM corrigés et un assistant IA pour comprendre tes cours et préparer tes examens.</p>
-    <a class="btn" href="https://etudiantslearn.streamlit.app/">🎓 Essayer gratuitement</a>
-    <a class="btn clair" href="#fonctions">Découvrir les fonctionnalités</a>
+<div class="hero"><div class="wrap">
+  <div class="kicker">Plateforme d’aide à la réussite</div>
+  <h1>Réussis tes études à partir de tes propres cours</h1>
+  <p>Dépose ton cours en PDF ou Word : obtiens des résumés approfondis, des QCM corrigés et un assistant IA pour comprendre tes cours et préparer tes examens. Sans inscription.</p>
+  <div class="actions">
+    <a class="btn or" href="https://etudiantslearn.streamlit.app/">Essayer gratuitement</a>
+    <a class="btn contour" href="#fonctions">Découvrir les fonctionnalités</a>
   </div>
+</div></div>
 
-  <section id="fonctions">
-    <h2>Tout pour réviser efficacement</h2>
-    <p class="sous">Passe du cours brut à une révision structurée pour préparer tes examens.</p>
-    <div class="grille">
-      <article class="carte"><div class="ico">📝</div><h3>Résumés approfondis</h3><p>Transforme tes cours en résumés structurés pour retrouver les notions essentielles et réviser plus facilement.</p></article>
-      <article class="carte"><div class="ico">✅</div><h3>QCM jusqu'à 100 questions</h3><p>Entraîne-toi avec des questions et des corrections pour évaluer ta compréhension du cours.</p></article>
-      <article class="carte"><div class="ico">💬</div><h3>Assistant IA</h3><p>Pose tes questions sur ton cours et demande des explications ou des exemples pour mieux comprendre.</p></article>
-      <article class="carte"><div class="ico">📤</div><h3>Export des résumés</h3><p>Retrouve les formats d'export proposés par l'application pour conserver tes fiches de révision.</p></article>
-      <article class="carte"><div class="ico">👤</div><h3>Espace personnel</h3><p>Utilise les fonctionnalités de compte disponibles pour retrouver ton travail de révision.</p></article>
-      <article class="carte"><div class="ico">📚</div><h3>Différentes matières</h3><p>Importe tes cours compatibles et utilise les outils de révision pour préparer tes évaluations.</p></article>
-    </div>
-  </section>
+<div class="chiffres"><div class="wrap">
+  <div><b>100</b><span>questions par QCM</span></div>
+  <div><b>3</b><span>niveaux de résumé</span></div>
+  <div><b>4</b><span>formats d’export</span></div>
+  <div><b>0</b><span>compte à créer</span></div>
+</div></div>
 
-  <section class="fond" id="comment"><div>
-    <h2>Comment ça marche ?</h2>
-    <p class="sous">Trois étapes pour commencer à réviser.</p>
-    <div class="etapes">
-      <div><b>Charge ton cours</b><p>Importe un document PDF ou Word compatible.</p></div>
-      <div><b>Génère tes supports</b><p>Prépare un résumé ou un QCM selon les fonctionnalités disponibles.</p></div>
-      <div><b>Révise et progresse</b><p>Entraîne-toi et pose des questions à l'assistant IA.</p></div>
-    </div>
-  </div></section>
+<section id="fonctions"><div class="wrap">
+  <div class="titre"><h2>Tout pour réviser efficacement</h2><p>Passe du cours brut à une révision structurée pour préparer tes examens.</p></div>
+  <div class="grille">
+    <div class="carte"><div class="tag">Résumé</div><h3>Résumés approfondis</h3><p>Une fiche par chapitre : définitions, formules, démonstrations, exemples résolus et pièges à éviter. Trois niveaux de détail au choix.</p></div>
+    <div class="carte"><div class="tag">Évaluation</div><h3>QCM jusqu’à 100 questions</h3><p>Sur tout le cours ou par chapitre, avec correction détaillée, note sur 20 et possibilité de refaire tes erreurs.</p></div>
+    <div class="carte"><div class="tag">Tutorat</div><h3>Assistant IA</h3><p>Pose tes questions sur ton cours : explications pas à pas, exercices corrigés et conseils pour l’examen.</p></div>
+    <div class="carte"><div class="tag">Export</div><h3>PDF, Word, HTML, Markdown</h3><p>Télécharge tes fiches, formules mathématiques comprises, pour réviser hors ligne.</p></div>
+    <div class="carte"><div class="tag">Maths</div><h3>Formules soignées</h3><p>Rendu LaTeX lisible dans l’application comme dans les documents exportés.</p></div>
+    <div class="carte"><div class="tag">Accès</div><h3>Sans inscription</h3><p>Ouvre l’application et commence tout de suite. Télécharge tes fiches pour les conserver.</p></div>
+  </div>
+</div></section>
 
-  <section id="faq">
-    <h2>Questions fréquentes</h2>
-    <p class="sous">Les réponses aux questions les plus courantes.</p>
-    <details><summary>Qu'est-ce qu'Étudiants Learn ?</summary><p>Étudiants Learn est une plateforme de révision qui propose des résumés de cours, des QCM et un assistant IA.</p></details>
-    <details><summary>Quels documents puis-je utiliser ?</summary><p>L'application accepte les documents PDF ou Word compatibles avec ses fonctionnalités d'importation.</p></details>
-    <details><summary>Combien de questions peut contenir un QCM ?</summary><p>Les QCM peuvent aller jusqu'à 100 questions, selon les options proposées par l'application.</p></details>
-    <details><summary>Comment accéder à la plateforme ?</summary><p>Ouvre <a href="https://etudiantslearn.streamlit.app/">Étudiants Learn</a> depuis ton navigateur.</p></details>
-  </section>
+<section id="comment" class="gris"><div class="wrap">
+  <div class="titre"><h2>Comment ça marche ?</h2><p>Trois étapes pour commencer à réviser.</p></div>
+  <div class="etapes">
+    <div class="etape"><i>1</i><h3>Charge ton cours</h3><p>Importe un document PDF ou Word : il est lu en entier et découpé en chapitres.</p></div>
+    <div class="etape"><i>2</i><h3>Génère tes supports</h3><p>Prépare un résumé ou un QCM, sur tout le cours ou sur les chapitres de ton choix.</p></div>
+    <div class="etape"><i>3</i><h3>Révise et progresse</h3><p>Entraîne-toi, consulte la correction et pose tes questions à l’assistant IA.</p></div>
+  </div>
+</div></section>
 
-  <section class="contact" id="contact">
-    <h2>Une question ?</h2>
-    <p class="sous">Pour toute question concernant la plateforme, contacte son concepteur.</p>
-    <p>✉️ <a class="t" href="mailto:ambroisebok@gmail.com">ambroisebok@gmail.com</a></p>
-    <p style="margin-top:1.4rem"><a class="btn" href="https://etudiantslearn.streamlit.app/">Ouvrir Étudiants Learn</a></p>
-  </section>
+<section id="services"><div class="wrap">
+  <div class="titre"><h2>Accompagnement académique</h2><p>Au-delà de l’application, un accompagnement personnalisé pour tes travaux.</p></div>
+  <div class="grille">
+    <div class="carte dore"><div class="tag">Données</div><h3>Traitement et analyse de données</h3>
+      <p>Des données propres, correctement analysées et clairement présentées.</p>
+      <ul><li>Saisie, nettoyage et codage des données</li><li>Analyses statistiques et calculs</li><li>Tableaux, graphiques et mise en forme</li><li>Interprétation et présentation des résultats</li></ul></div>
+    <div class="carte dore"><div class="tag">Académique</div><h3>Accompagnement à la rédaction de mémoire</h3>
+      <p>Un accompagnement méthodologique, de l’idée de départ jusqu’à la soutenance.</p>
+      <ul><li>Choix du sujet, problématique et plan</li><li>Revue de littérature et méthodologie</li><li>Rédaction, mise en forme et références</li><li>Préparation à la soutenance</li></ul></div>
+  </div>
+  <p style="margin:1.4rem 0 0;color:var(--muted);font-size:.85rem">Accompagnement méthodologique : le mémoire reste ton travail personnel.</p>
+</div></section>
+
+<section id="faq" class="gris"><div class="wrap">
+  <div class="titre"><h2>Questions fréquentes</h2><p>Les réponses aux questions les plus courantes.</p></div>
+  <div class="faq">
+    <details><summary>Qu’est-ce qu’Étudiants Learn ?</summary><p>Une plateforme de révision qui propose des résumés de cours, des QCM corrigés et un assistant IA, complétée par un accompagnement en traitement de données et en rédaction de mémoire.</p></details>
+    <details><summary>Faut-il créer un compte ?</summary><p>Non. L’application s’utilise directement, sans inscription. Tes cours, résumés et QCM restent dans ta session : pense à télécharger tes fiches pour les conserver.</p></details>
+    <details><summary>Quels documents puis-je utiliser ?</summary><p>Des cours au format PDF ou Word (.docx).</p></details>
+    <details><summary>Combien de questions peut contenir un QCM ?</summary><p>Jusqu’à 100 questions, sur tout le cours ou chapitre par chapitre, avec une correction détaillée.</p></details>
+    <details><summary>Dans quels formats puis-je exporter mes résumés ?</summary><p>PDF, Word, HTML et Markdown.</p></details>
+    <details><summary>Comment bénéficier de l’accompagnement en données ou en mémoire ?</summary><p>Contacte-nous par appel, WhatsApp ou e-mail en décrivant ton besoin : nous précisons ensemble les objectifs, le délai et les modalités.</p></details>
+  </div>
+</div></section>
+
+<section id="contact" class="contact"><div class="wrap">
+  <div class="titre"><h2>Une question ? Un besoin ?</h2><p>Pour la plateforme, le traitement de données ou ton mémoire, contacte son concepteur.</p></div>
+  <div class="coord">
+    <div><small>E-mail</small><a href="mailto:ambroisebok@gmail.com">ambroisebok@gmail.com</a></div>
+    <div><small>Téléphone</small><a href="tel:+22891942948">+228 91 94 29 48</a><a class="wa-l" href="https://wa.me/22891942948?text=Bonjour%2C%20je%20vous%20contacte%20depuis%20%C3%89tudiants%20Learn.">WhatsApp</a></div>
+    <div><small>Téléphone</small><a href="tel:+22896286244">+228 96 28 62 44</a><a class="wa-l" href="https://wa.me/22896286244?text=Bonjour%2C%20je%20vous%20contacte%20depuis%20%C3%89tudiants%20Learn.">WhatsApp</a></div>
+  </div>
+  <a class="btn or" href="https://etudiantslearn.streamlit.app/">Ouvrir Étudiants Learn</a>
+</div></section>
 </main>
 
-<footer>
-  © <span id="an"></span> Étudiants Learn · Conçu par <b>BOKOUMBO Tibetobe Ambroise</b> ·
-  <a href="mailto:ambroisebok@gmail.com">Contact</a>
-</footer>
+<footer>© <span id="an">2026</span> Étudiants Learn · Conçu par <b>BOKOUMBO Tibetobe Ambroise</b> · <a href="mailto:ambroisebok@gmail.com">Contact</a></footer>
 <script>document.getElementById("an").textContent=new Date().getFullYear();</script>
 </body>
 </html>
